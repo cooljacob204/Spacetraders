@@ -3,8 +3,8 @@ defmodule Spacetraders.Repo.Migrations.CreateAgents do
 
   def change do
     create table(:agents) do
-      add :symbol, :string
-      add :token, :string
+      add :symbol, :string, null: false
+      add :token, :text, null: false
 
       timestamps()
     end
