@@ -17,9 +17,11 @@ defmodule Spacetraders.Application do
       # Start Finch
       {Finch, name: Spacetraders.Finch},
       # Start the Endpoint (http/https)
-      SpacetradersWeb.Endpoint
+      SpacetradersWeb.Endpoint,
       # Start a worker by calling: Spacetraders.Worker.start_link(arg)
       # {Spacetraders.Worker, arg}
+      Spacetraders.DynamicSupervisor,
+      {Task, &Spacetraders.DynamicSupervisor.start_children/0}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

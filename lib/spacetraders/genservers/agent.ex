@@ -3,6 +3,14 @@ defmodule Spacetraders.Genservers.Agent do
 
   # Client
 
+  def children_list do
+    Enum.map(Spacetraders.Agent.list_agents(), fn agent ->
+      %{ id: String.to_atom("spacetrader_agent_#{agent.symbol}"),
+        start: {Spacetraders.Genservers.Agent, :start_link, [agent]}
+      }
+    end)
+  end
+
   def start_link(agent) do
     GenServer.start_link(__MODULE__, agent, name: String.to_atom("spacetrader_agent_#{agent.symbol}"))
   end
