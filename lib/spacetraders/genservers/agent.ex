@@ -5,26 +5,30 @@ defmodule Spacetraders.Genservers.Agent do
 
   def children_list do
     Enum.map(Spacetraders.Agent.list_agents(), fn agent ->
-      %{ id: String.to_atom("spacetrader_agent_#{agent.symbol}"),
+      %{ id: process_id(agent.symbol),
         start: {Spacetraders.Genservers.Agent, :start_link, [agent]}
       }
     end)
   end
 
   def start_link(agent) do
-    GenServer.start_link(__MODULE__, agent, name: String.to_atom("spacetrader_agent_#{agent.symbol}"))
+    Task.start(fn -> Spacetraders.Genservers.Agent.sync(agent.symbol) end)
+    GenServer.start_link(__MODULE__, agent, name: process_id(agent.symbol))
   end
 
+  def process_id(symbol),
+    do: {:via, Registry, {AgentRegistry, "agent_#{symbol}"}}
+
   def get(symbol) do
-    GenServer.call(String.to_existing_atom("spacetrader_agent_#{symbol}"), :get)
+    GenServer.call(process_id(symbol), :get)
   end
 
   def update(symbol, attrs) do
-    GenServer.cast(String.to_existing_atom("spacetrader_agent_#{symbol}"), {:update, attrs})
+    GenServer.cast(process_id(symbol), {:update, attrs})
   end
 
   def sync(symbol) do
-    GenServer.cast(String.to_existing_atom("spacetrader_agent_#{symbol}"), :sync)
+    GenServer.cast(process_id(symbol), :sync)
   end
 
   # Server

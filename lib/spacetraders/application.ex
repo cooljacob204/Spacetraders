@@ -21,6 +21,7 @@ defmodule Spacetraders.Application do
       # Start a worker by calling: Spacetraders.Worker.start_link(arg)
       # {Spacetraders.Worker, arg}
       Spacetraders.DynamicSupervisor,
+      {Registry, keys: :unique, name: AgentRegistry},
       {Task, &Spacetraders.DynamicSupervisor.start_children/0}
     ]
 
