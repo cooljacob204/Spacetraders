@@ -1,6 +1,6 @@
 <section>
   <h1>Agents: </h1>
   <%= for agent <- @agents do %>
-    <p><%= agent.symbol %></p>
+    <p><a {%{"href" => "/agents/#{agent.symbol}"}}><%= agent.symbol %></a></p>
   <% end %>
 </section>

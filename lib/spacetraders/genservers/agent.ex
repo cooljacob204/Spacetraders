@@ -12,11 +12,11 @@ defmodule Spacetraders.Genservers.Agent do
   end
 
   def start_link(agent) do
-    Task.start(fn -> Spacetraders.Genservers.Agent.sync(agent.symbol) end)
     GenServer.start_link(__MODULE__, agent, name: process_id(agent.symbol))
+    Task.start(fn -> Spacetraders.Genservers.Agent.sync(agent.symbol) end)
   end
 
-  def process_id(symbol),
+  defp process_id(symbol),
     do: {:via, Registry, {AgentRegistry, "agent_#{symbol}"}}
 
   def get(symbol) do
@@ -48,6 +48,8 @@ defmodule Spacetraders.Genservers.Agent do
       |> Spacetraders.Agent.changeset(attrs)
       |> Ecto.Changeset.apply_changes()
 
+    broadcast({:ok, agent}, :agent_updated)
+
     {:noreply, agent}
   end
 
@@ -68,6 +70,19 @@ defmodule Spacetraders.Genservers.Agent do
       |> Spacetraders.Agent.changeset(attrs)
       |> Ecto.Changeset.apply_changes()
 
+      broadcast({:ok, agent}, :agent_updated)
+
       {:noreply, agent}
+  end
+
+  def subscribe(%Spacetraders.Agent{} = agent) do
+    Phoenix.PubSub.subscribe(Spacetraders.PubSub, "agent-#{agent.symbol}")
+  end
+
+  defp broadcast({:error, _reason} = error, _event), do: error
+  defp broadcast({:ok, %Spacetraders.Agent{} = agent}, event) do
+    Phoenix.PubSub.broadcast(Spacetraders.PubSub, "agent-#{agent.symbol}", {event, agent})
+
+    {:ok, agent}
   end
 end
