@@ -17,7 +17,7 @@ defmodule Spacetraders.Genservers.Agent do
   end
 
   defp process_id(symbol),
-    do: {:via, Registry, {AgentRegistry, "agent_#{symbol}"}}
+    do: {:via, Registry, {AgentRegistry, symbol}}
 
   def get(symbol) do
     GenServer.call(process_id(symbol), :get)
@@ -29,6 +29,10 @@ defmodule Spacetraders.Genservers.Agent do
 
   def sync(symbol) do
     GenServer.cast(process_id(symbol), :sync)
+  end
+
+  def add_ship(symbol, ship_symbol) do
+    GenServer.cast(process_id(symbol), {:add_ship, ship_symbol})
   end
 
   # Server
@@ -52,8 +56,15 @@ defmodule Spacetraders.Genservers.Agent do
 
     {:noreply, agent}
   end
+  def handle_cast({:add_ship, ship_symbol}, agent) do
+    agent = agent
+      |> Spacetraders.Agent.changeset(%{ships: [ship_symbol | agent.ships]})
+      |> Ecto.Changeset.apply_changes()
 
-  @impl true
+    broadcast({:ok, agent}, :agent_updated)
+
+    {:noreply, agent}
+  end
   def handle_cast(:sync, agent) do
     attrs = case Spacetraders.Api.Agent.my_agent(agent) do
       %{"data" => data} ->
@@ -66,13 +77,9 @@ defmodule Spacetraders.Genservers.Agent do
       %{"error" => error } -> raise "Error: #{error}"
     end
 
-    agent = agent
-      |> Spacetraders.Agent.changeset(attrs)
-      |> Ecto.Changeset.apply_changes()
+    update(agent.symbol, attrs)
 
-      broadcast({:ok, agent}, :agent_updated)
-
-      {:noreply, agent}
+    {:noreply, agent}
   end
 
   def subscribe(%Spacetraders.Agent{} = agent) do

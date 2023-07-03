@@ -11,6 +11,7 @@ defmodule Spacetraders.Agent do
     field :credits, :integer, virtual: true
     field :starting_faction, :string, virtual: true
     field :headquarters, :string, virtual: true
+    field :ships, {:array, :string}, virtual: true, default: []
 
     timestamps()
   end
@@ -18,7 +19,7 @@ defmodule Spacetraders.Agent do
   @doc false
   def changeset(agent, attrs) do
     agent
-    |> cast(attrs, [:symbol, :token, :account_id, :credits, :starting_faction, :headquarters])
+    |> cast(attrs, [:symbol, :token, :account_id, :credits, :starting_faction, :headquarters, :ships])
     |> validate_required([:symbol, :token])
   end
 

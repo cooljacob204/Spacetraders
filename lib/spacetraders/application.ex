@@ -22,6 +22,7 @@ defmodule Spacetraders.Application do
       # {Spacetraders.Worker, arg}
       Spacetraders.DynamicSupervisor,
       {Registry, keys: :unique, name: AgentRegistry},
+      {Registry, keys: :unique, name: ShipRegistry},
       {Task, &Spacetraders.DynamicSupervisor.start_children/0}
     ]
 
