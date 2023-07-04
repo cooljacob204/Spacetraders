@@ -6,8 +6,4 @@ defmodule Spacetraders.Api.Agent do
   def get_ships(agent) do
     Spacetraders.Api.get(agent, "/my/ships")
   end
-
-  def get_ship(agent, symbol) do
-    Spacetraders.Api.get(agent, "/my/ships/#{symbol}")
-  end
 end

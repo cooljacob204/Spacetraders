@@ -1,6 +1,21 @@
 defmodule Spacetraders.Ship do
+  use Ecto.Schema
   import Ecto.Changeset
-  defstruct [:agent_symbol, :symbol, :nav, :crew, :fuel, :frame, :reactor, :engine, :modules, :mounts, :registration, :cargo]
+
+  schema "/my/ships" do
+    field :agent_symbol, :string
+    field :symbol, :string
+    embeds_one :nav, Spacetraders.Ship.Navigation
+    field :crew, :any, virtual: true
+    field :fuel, :any, virtual: true
+    field :frame, :any, virtual: true
+    field :reactor, :any, virtual: true
+    field :engine, :any, virtual: true
+    field :modules, {:array, :map}
+    field :mounts, {:array, :map}
+    embeds_one :registration, Spacetraders.Ship.Registration
+    field :cargo, :any, virtual: true
+  end
 
   def list_ships(agent) do
     ships = case Spacetraders.Api.Agent.get_ships(agent) do
@@ -15,23 +30,10 @@ defmodule Spacetraders.Ship do
   end
 
   def changeset(ship, attrs) do
-    types = %{
-      agent_symbol: :string,
-      symbol: :string,
-      nav: :any,
-      crew: :any,
-      fuel: :any,
-      frame: :any,
-      reactor: :any,
-      engine: :any,
-      modules: {:array, :map},
-      mounts: {:array, :map},
-      registration: :any,
-      cargo: :any
-    }
-
-    {ship, types}
-    |> cast(attrs, Map.keys(types))
+    ship
+    |> cast(attrs, [:agent_symbol, :symbol, :crew, :fuel, :frame, :reactor, :engine, :modules, :mounts, :cargo])
+    |> cast_embed(:registration, with: &Spacetraders.Ship.Registration.changeset/2)
+    |> cast_embed(:nav, with: &Spacetraders.Ship.Navigation.changeset/2)
     |> validate_required([:agent_symbol, :symbol, :nav, :crew, :fuel, :frame, :reactor, :engine, :modules, :mounts, :registration, :cargo])
   end
 end

@@ -12,8 +12,12 @@ defmodule Spacetraders.Genservers.Agent do
   end
 
   def start_link(agent) do
-    GenServer.start_link(__MODULE__, agent, name: process_id(agent.symbol))
-    Task.start(fn -> Spacetraders.Genservers.Agent.sync(agent.symbol) end)
+    case GenServer.start_link(__MODULE__, agent, name: process_id(agent.symbol)) do
+      {:ok, pid} ->
+        Task.start(fn -> Spacetraders.Genservers.Agent.sync(agent.symbol) end)
+        {:ok, pid}
+      {:error, {:already_started, pid}} -> {:already_started, pid}
+    end
   end
 
   defp process_id(symbol),
@@ -58,7 +62,7 @@ defmodule Spacetraders.Genservers.Agent do
   end
   def handle_cast({:add_ship, ship_symbol}, agent) do
     agent = agent
-      |> Spacetraders.Agent.changeset(%{ships: [ship_symbol | agent.ships]})
+      |> Spacetraders.Agent.changeset(%{ships: Enum.uniq([ship_symbol | agent.ships])})
       |> Ecto.Changeset.apply_changes()
 
     broadcast({:ok, agent}, :agent_updated)
@@ -67,13 +71,7 @@ defmodule Spacetraders.Genservers.Agent do
   end
   def handle_cast(:sync, agent) do
     attrs = case Spacetraders.Api.Agent.my_agent(agent) do
-      %{"data" => data} ->
-        %{
-          account_id: data["accountId"],
-          credits: data["credits"],
-          starting_faction: data["startingFaction"],
-          headquarters: data["headquarters"]
-        }
+      %{"data" => data} -> data
       %{"error" => error } -> raise "Error: #{error}"
     end
 
