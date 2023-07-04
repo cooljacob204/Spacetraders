@@ -18,7 +18,7 @@ defmodule SpacetradersWeb.ShipLive do
       <div class='text-xl font-bold p-2'><%= assigns.ship.symbol %></div>
       <div class='flex flex-row gap-1'>
         <div class='border-2 rounded p-2'>
-          <div class='text-lg font-bold'>registration</div>
+          <div class='text-lg font-bold'>Registration</div>
           <div>Name: <%= assigns.ship.registration.name %></div>
           <div>Faction: <%= assigns.ship.registration.faction_symbol %></div>
           <div>Role: <%= assigns.ship.registration.role %></div>
@@ -33,12 +33,15 @@ defmodule SpacetradersWeb.ShipLive do
               <div>Flight Mode: <%= assigns.ship.nav.flight_mode %></div>
             </div>
             <div>
-              <button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click="orbit">Orbit</button>
-              <button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click="dock">Dock</button>
+              <%= if assigns.ship.nav.status == :DOCKED do %>
+                <button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click="orbit">Orbit</button>
+              <% else %>
+                <button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click="dock">Dock</button>
+              <% end %>
             </div>
           </div>
           <div class='border-2 rounded p-2'>
-            Route:
+            <div class='font-bold'>Route</div>
             <div class='flex flex-row gap-1'>
               <div class='border-2 rounded p-2 flexbox'>
                 Departure:

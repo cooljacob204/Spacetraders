@@ -2,7 +2,7 @@ defmodule SpacetradersWeb.AgentLive do
   use SpacetradersWeb, :live_view
 
   def mount(params, _session, socket) do
-    agent = Spacetraders.Genservers.Agent.get(params["symbol"])
+    agent = Spacetraders.Genservers.Agent.get(String.upcase(params["symbol"]))
     Spacetraders.Genservers.Agent.subscribe(agent)
 
     {
@@ -14,7 +14,7 @@ defmodule SpacetradersWeb.AgentLive do
 
   def render(assigns) do
     ~H"""
-      <header class='flex flex-row p-2'>
+      <header class='flex flex-row p-1'>
         <div class = 'border-2 rounded p-2'>
           <p><%= assigns.agent.symbol %></p>
           <p><%= assigns.agent.headquarters %></p>
@@ -22,7 +22,7 @@ defmodule SpacetradersWeb.AgentLive do
           <p><%= assigns.agent.credits %></p>
         </div>
       </header>
-      <content>
+      <content class='flex flex-row'>
         <%= for ship <- assigns.agent.ships do %>
             <%= live_render(@socket, SpacetradersWeb.ShipLive, id: ship, session: %{"symbol" => ship}) %>
         <% end %>
