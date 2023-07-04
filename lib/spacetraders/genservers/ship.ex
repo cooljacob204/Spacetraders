@@ -48,17 +48,17 @@ defmodule Spacetraders.Genservers.Ship do
 
   # Server
   @impl true
-  def init(ship) do
+  def init(%Spacetraders.Ship{} = ship) do
     {:ok, ship}
   end
 
   @impl true
-  def handle_call(:get, _from, ship) do
+  def handle_call(:get, _from, %Spacetraders.Ship{} = ship) do
     {:reply, ship, ship}
   end
 
   @impl true
-  def handle_cast({:update, attrs}, ship) do
+  def handle_cast({:update, attrs}, %Spacetraders.Ship{} = ship) do
     ship = ship
       |> Spacetraders.Ship.changeset(attrs)
       |> Ecto.Changeset.apply_changes()
@@ -78,7 +78,7 @@ defmodule Spacetraders.Genservers.Ship do
 
     {:noreply, ship}
   end
-  def handle_cast(:dock, ship) do
+  def handle_cast(:dock, %Spacetraders.Ship{} = ship) do
     agent = Spacetraders.Genservers.Agent.get(ship.agent_symbol)
 
     %{"data" => attrs} = Spacetraders.Api.Ship.dock(agent, ship)
@@ -87,7 +87,7 @@ defmodule Spacetraders.Genservers.Ship do
 
     {:noreply, ship}
   end
-  def handle_cast(:orbit, ship) do
+  def handle_cast(:orbit, %Spacetraders.Ship{} = ship) do
     agent = Spacetraders.Genservers.Agent.get(ship.agent_symbol)
 
     %{"data" => attrs} = Spacetraders.Api.Ship.orbit(agent, ship)
