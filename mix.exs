@@ -52,7 +52,8 @@ defmodule Spacetraders.MixProject do
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
       {:httpoison, "~> 2.0"},
-      {:proper_case, "~> 1.0.2"}
+      {:proper_case, "~> 1.0.2"},
+      {:tz, "~> 0.26.2"}
     ]
   end
 

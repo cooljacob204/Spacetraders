@@ -24,7 +24,7 @@ defmodule SpacetradersWeb.AgentLive do
       </header>
       <content class='flex flex-row'>
         <%= for ship <- assigns.agent.ships do %>
-            <.live_component module={SpacetradersWeb.Components.ShipLive} id={ship} ship_symbol={ship} agent={assigns.agent}/>
+            <.live_component module={SpacetradersWeb.ShipComponent} id={ship} ship_symbol={ship} agent={assigns.agent}/>
         <% end %>
       </content>
     """
@@ -34,7 +34,7 @@ defmodule SpacetradersWeb.AgentLive do
     {:noreply, socket |> assign(:agent, agent)}
   end
   def handle_info({:ship_updated, ship}, socket) do
-    send_update SpacetradersWeb.Components.ShipLive, id: ship.symbol, ship_symbol: ship.symbol
+    send_update SpacetradersWeb.ShipComponent, id: ship.symbol, ship_symbol: ship.symbol, agent: socket.assigns.agent
     {:noreply, socket}
   end
 end

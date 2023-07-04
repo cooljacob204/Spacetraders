@@ -1,17 +1,17 @@
-defmodule SpacetradersWeb.Components.ShipLive do
+defmodule SpacetradersWeb.ShipComponent do
   use SpacetradersWeb, :live_component
 
   def update(assigns, socket) do
     ship = Spacetraders.Genservers.Ship.get(assigns.ship_symbol)
     Spacetraders.Genservers.Ship.subscribe(ship)
-    {:ok, socket |> assign(:ship, ship)}
+    {:ok, socket |> assign(:ship, ship) |> assign(:agent, assigns.agent)}
   end
 
   def render(assigns) do
     ~H"""
     <div class='border-2 rounded p-2 m-1'>
       <.modal id={"ship-#{assigns.ship.symbol}-system"}>
-        <%= live_component SpacetradersWeb.Live.Components.System, id: "ship-#{assigns.ship.symbol}-system-live", ship: assigns.ship %>
+        <.live_component module={SpacetradersWeb.Live.SystemComponent} id={"ship-#{assigns.ship.symbol}-system-live"} ship={assigns.ship} agent={assigns.agent}/>
       </.modal>
       <div class='text-xl font-bold p-2'><%= assigns.ship.symbol %></div>
       <div class='flex flex-row gap-1'>
@@ -31,16 +31,23 @@ defmodule SpacetradersWeb.Components.ShipLive do
               <div>Flight Mode: <%= assigns.ship.nav.flight_mode %></div>
             </div>
             <div>
-              <%= if assigns.ship.nav.status == :DOCKED do %>
-                <button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click="orbit" phx-target={@myself}>Orbit</button>
-              <% else %>
-                <button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click="dock" phx-target={@myself}>Dock</button>
+              <%= case assigns.ship.nav.status do %>
+                <% :DOCKED -> %>
+                  <.button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click="orbit" phx-target={@myself}>Orbit</.button>
+                <% :IN_ORBIT -> %>
+                  <.button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click="dock" phx-target={@myself}>Dock</.button>
+                <% _ -> %>
               <% end %>
-                <button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click={show_modal("ship-#{assigns.ship.symbol}-system")}>System</button>
+                <.button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click={show_modal("ship-#{assigns.ship.symbol}-system")}>System</.button>
+                <.button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click="sync" phx-target={@myself}>Sync</.button>
             </div>
           </div>
           <div class='border-2 rounded p-2'>
             <div class='font-bold'>Route</div>
+            <div>
+              <div>Arrival: <%= Calendar.strftime(DateTime.shift_zone!(assigns.ship.nav.route.arrival, "America/New_York"),  "%y-%m-%d %I:%M:%S %p") %></div>
+              <div>Departure: <%= Calendar.strftime(DateTime.shift_zone!(assigns.ship.nav.route.departure_time, "America/New_York"),  "%y-%m-%d %I:%M:%S %p") %></div>
+            </div>
             <div class='flex flex-row gap-1'>
               <div class='border-2 rounded p-2 flexbox'>
                 Departure:
@@ -74,9 +81,9 @@ defmodule SpacetradersWeb.Components.ShipLive do
     Spacetraders.Genservers.Ship.orbit(ship.symbol)
     {:noreply, socket}
   end
-  # def handle_info("show_system", _, socket) do
-  #   ship = socket.assigns.ship
-  #   SpacetradersWeb.CoreComponents.show_modal(socket.js, "ship-#{ship.symbol}-system")
-  #   {:noreply, socket}
-  # end
+  def handle_event("sync", _, socket) do
+    ship = socket.assigns.ship
+    Spacetraders.Genservers.Ship.sync(ship.symbol)
+    {:noreply, socket}
+  end
 end

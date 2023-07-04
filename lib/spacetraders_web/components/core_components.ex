@@ -213,8 +213,8 @@ defmodule SpacetradersWeb.CoreComponents do
     <button
       type={@type}
       class={[
-        "phx-submit-loading:opacity-75 rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3",
-        "text-sm font-semibold leading-6 text-white active:text-white/80",
+        "phx-submit-loading:opacity-75 rounded-full bg-cyan-500 text-white px-4 py-2",
+        "hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed",
         @class
       ]}
       {@rest}

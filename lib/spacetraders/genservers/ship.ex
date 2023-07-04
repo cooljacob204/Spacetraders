@@ -43,6 +43,10 @@ defmodule Spacetraders.Genservers.Ship do
     GenServer.cast(process_id(symbol), :orbit)
   end
 
+  def navigate(symbol, waypoint) do
+    GenServer.cast(process_id(symbol), {:navigate, waypoint})
+  end
+
   defp process_id(symbol),
     do: {:via, Registry, {ShipRegistry, symbol}}
 
@@ -70,32 +74,46 @@ defmodule Spacetraders.Genservers.Ship do
 
   @impl true
   def handle_cast(:sync, %Spacetraders.Ship{} = ship) do
-    agent = Spacetraders.Genservers.Agent.get(ship.agent_symbol)
-
-    %{"data" => attrs} = Spacetraders.Api.Ship.get_ship(agent, ship.symbol)
+    %{"data" => attrs} = Spacetraders.Api.Ship.get_ship(agent(ship), ship.symbol)
 
     update(ship.symbol, attrs)
 
     {:noreply, ship}
   end
   def handle_cast(:dock, %Spacetraders.Ship{} = ship) do
-    agent = Spacetraders.Genservers.Agent.get(ship.agent_symbol)
-
-    %{"data" => attrs} = Spacetraders.Api.Ship.dock(agent, ship)
+    %{"data" => attrs} = Spacetraders.Api.Ship.dock(agent(ship), ship)
 
     update(ship.symbol, attrs)
 
     {:noreply, ship}
   end
   def handle_cast(:orbit, %Spacetraders.Ship{} = ship) do
-    agent = Spacetraders.Genservers.Agent.get(ship.agent_symbol)
-
-    %{"data" => attrs} = Spacetraders.Api.Ship.orbit(agent, ship)
+    %{"data" => attrs} = Spacetraders.Api.Ship.orbit(agent(ship), ship)
 
     update(ship.symbol, attrs)
 
     {:noreply, ship}
   end
+  def handle_cast({:navigate, waypoint}, %Spacetraders.Ship{} = ship) do
+    %{"data" => attrs} = Spacetraders.Api.Ship.navigate(agent(ship), ship, waypoint)
+
+    update(ship.symbol, attrs)
+
+    {:ok, arrival_time, 0} = DateTime.from_iso8601(attrs["nav"]["route"]["arrival"])
+    Process.send_after(self(), :sync, (DateTime.to_unix(arrival_time) - System.system_time(:second) + 1) * 1000)
+
+    {:noreply, ship}
+  end
+
+  @impl true
+  def handle_info(:sync, %Spacetraders.Ship{} = ship) do
+    sync(ship.symbol)
+
+    {:noreply, ship}
+  end
+
+  defp agent(ship),
+    do: Spacetraders.Genservers.Agent.get(ship.agent_symbol)
 
   def subscribe(%Spacetraders.Ship{} = ship) do
     Phoenix.PubSub.subscribe(Spacetraders.PubSub, "ship-#{ship.symbol}")

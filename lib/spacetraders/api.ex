@@ -12,8 +12,8 @@ defmodule Spacetraders.Api do
     end
   end
 
-  def post(agent, path, opts \\ []) do
-    case HTTPoison.post("#{@base_url}#{path}", "", headers(agent), opts) do
+  def post(agent, path, body, opts \\ []) do
+    case HTTPoison.post("#{@base_url}#{path}", body, headers(agent), opts) do
       {:ok, %{body: body}} ->
         body
         |> Jason.decode!()
@@ -28,6 +28,6 @@ defmodule Spacetraders.Api do
   end
 
   defp headers(agent) do
-    [token(agent)]
+    [token(agent), {"Content-Type", "application/json"}]
   end
 end

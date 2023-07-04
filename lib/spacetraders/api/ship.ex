@@ -6,10 +6,14 @@ defmodule Spacetraders.Api.Ship do
   end
 
   def orbit(agent, ship) do
-    post(agent, "/my/ships/#{ship.symbol}/orbit")
+    post(agent, "/my/ships/#{ship.symbol}/orbit", "")
   end
 
   def dock(agent, ship) do
-    post(agent, "/my/ships/#{ship.symbol}/dock")
+    post(agent, "/my/ships/#{ship.symbol}/dock", "")
+  end
+
+  def navigate(agent, ship, waypoint) do
+    post(agent, "/my/ships/#{ship.symbol}/navigate", Jason.encode!(%{waypointSymbol: waypoint}))
   end
 end
