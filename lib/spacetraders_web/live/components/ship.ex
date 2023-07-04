@@ -1,20 +1,18 @@
-defmodule SpacetradersWeb.ShipLive do
-  use SpacetradersWeb, :live_view
+defmodule SpacetradersWeb.Components.ShipLive do
+  use SpacetradersWeb, :live_component
 
-  def mount(_params, session, socket) do
-    ship = Spacetraders.Genservers.Ship.get(session["symbol"])
+  def update(assigns, socket) do
+    ship = Spacetraders.Genservers.Ship.get(assigns.ship_symbol)
     Spacetraders.Genservers.Ship.subscribe(ship)
-
-    {
-      :ok,
-      socket
-      |> assign(:ship, ship)
-    }
+    {:ok, socket |> assign(:ship, ship)}
   end
 
   def render(assigns) do
     ~H"""
     <div class='border-2 rounded p-2 m-1'>
+      <.modal id={"ship-#{assigns.ship.symbol}-system"}>
+        <%= live_component SpacetradersWeb.Live.Components.System, id: "ship-#{assigns.ship.symbol}-system-live", ship: assigns.ship %>
+      </.modal>
       <div class='text-xl font-bold p-2'><%= assigns.ship.symbol %></div>
       <div class='flex flex-row gap-1'>
         <div class='border-2 rounded p-2'>
@@ -34,10 +32,11 @@ defmodule SpacetradersWeb.ShipLive do
             </div>
             <div>
               <%= if assigns.ship.nav.status == :DOCKED do %>
-                <button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click="orbit">Orbit</button>
+                <button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click="orbit" phx-target={@myself}>Orbit</button>
               <% else %>
-                <button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click="dock">Dock</button>
+                <button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click="dock" phx-target={@myself}>Dock</button>
               <% end %>
+                <button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click={show_modal("ship-#{assigns.ship.symbol}-system")}>System</button>
             </div>
           </div>
           <div class='border-2 rounded p-2'>
@@ -65,9 +64,6 @@ defmodule SpacetradersWeb.ShipLive do
     """
   end
 
-  def handle_info({:ship_updated, ship}, socket) do
-    {:noreply, socket |> assign(:ship, Spacetraders.Genservers.Ship.get(ship.symbol))}
-  end
   def handle_event("dock", _, socket) do
     ship = socket.assigns.ship
     Spacetraders.Genservers.Ship.dock(ship.symbol)
@@ -78,4 +74,9 @@ defmodule SpacetradersWeb.ShipLive do
     Spacetraders.Genservers.Ship.orbit(ship.symbol)
     {:noreply, socket}
   end
+  # def handle_info("show_system", _, socket) do
+  #   ship = socket.assigns.ship
+  #   SpacetradersWeb.CoreComponents.show_modal(socket.js, "ship-#{ship.symbol}-system")
+  #   {:noreply, socket}
+  # end
 end
