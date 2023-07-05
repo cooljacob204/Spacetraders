@@ -2,7 +2,7 @@ defmodule Spacetraders.System do
   use Ecto.Schema
   import Ecto.Changeset
 
-  schema "/systems/system" do
+  schema "/systems" do
     field :symbol, :string
     field :sector_symbol, :string
     field :type, Ecto.Enum, values: [:NEUTRON_STAR, :RED_STAR, :ORANGE_STAR, :BLUE_STAR, :YOUNG_STAR, :WHITE_DWARF, :BLACK_HOLE, :HYPERGIANT, :NEBULA, :UNSTABLE]

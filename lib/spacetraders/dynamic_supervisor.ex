@@ -11,7 +11,7 @@ defmodule Spacetraders.DynamicSupervisor do
   end
 
   def start_children do
-    for child <- [Spacetraders.Genservers.Systems] ++ Spacetraders.Genservers.Agent.children_list ++ Spacetraders.Genservers.Ship.children_list do
+    for child <- [Spacetraders.Genservers.Systems] ++ Spacetraders.Genservers.Agent.children_list ++ Spacetraders.ShipServer.children_list do
       {:ok, _pid} = start_child(child)
     end
 

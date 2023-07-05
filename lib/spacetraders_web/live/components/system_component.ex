@@ -40,7 +40,7 @@ defmodule SpacetradersWeb.Live.SystemComponent do
   end
 
   def handle_event("travel", params, socket) do
-    Spacetraders.Genservers.Ship.navigate(socket.assigns.ship.symbol, params["value"])
+    Spacetraders.ShipServer.navigate(socket.assigns.ship.symbol, params["value"])
 
     {:noreply, socket}
   end

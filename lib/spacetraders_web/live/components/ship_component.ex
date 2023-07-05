@@ -2,8 +2,8 @@ defmodule SpacetradersWeb.ShipComponent do
   use SpacetradersWeb, :live_component
 
   def update(assigns, socket) do
-    ship = Spacetraders.Genservers.Ship.get(assigns.ship_symbol)
-    Spacetraders.Genservers.Ship.subscribe(ship)
+    ship = Spacetraders.ShipServer.get(assigns.ship_symbol)
+    Spacetraders.ShipServer.subscribe(ship)
     {:ok, socket |> assign(:ship, ship) |> assign(:agent, assigns.agent)}
   end
 
@@ -13,13 +13,21 @@ defmodule SpacetradersWeb.ShipComponent do
       <.modal id={"ship-#{assigns.ship.symbol}-system"}>
         <.live_component module={SpacetradersWeb.Live.SystemComponent} id={"ship-#{assigns.ship.symbol}-system-live"} ship={assigns.ship} agent={assigns.agent}/>
       </.modal>
-      <div class='text-xl font-bold p-2'><%= assigns.ship.symbol %></div>
+      <div class='text-xl font-bold px-1 pt-2'><%= assigns.ship.symbol %></div>
+      <div class='text-l font-bold px-1 pb-2'>Status: <%= assigns.ship.state %></div>
       <div class='flex flex-row gap-1'>
-        <div class='border-2 rounded p-2'>
-          <div class='text-lg font-bold'>Registration</div>
-          <div>Name: <%= assigns.ship.registration.name %></div>
-          <div>Faction: <%= assigns.ship.registration.faction_symbol %></div>
-          <div>Role: <%= assigns.ship.registration.role %></div>
+        <div class='flex flex-col gap-1'>
+          <div class='border-2 rounded p-2'>
+            <div class='text-lg font-bold'>Registration</div>
+            <div>Name: <%= assigns.ship.registration.name %></div>
+            <div>Faction: <%= assigns.ship.registration.faction_symbol %></div>
+            <div>Role: <%= assigns.ship.registration.role %></div>
+          </div>
+          <div class='border-2 rounded p-2'>
+            <div class='text-lg font-bold'>Fuel</div>
+            <div>Current: <%= assigns.ship.fuel.current %></div>
+            <div>Capacity: <%= assigns.ship.fuel.capacity %></div>
+          </div>
         </div>
         <div class='border-2 rounded p-2'>
           <div class='p-2 flex flex-row gap-1'>
@@ -73,17 +81,17 @@ defmodule SpacetradersWeb.ShipComponent do
 
   def handle_event("dock", _, socket) do
     ship = socket.assigns.ship
-    Spacetraders.Genservers.Ship.dock(ship.symbol)
+    Spacetraders.ShipServer.dock(ship.symbol)
     {:noreply, socket}
   end
   def handle_event("orbit", _, socket) do
     ship = socket.assigns.ship
-    Spacetraders.Genservers.Ship.orbit(ship.symbol)
+    Spacetraders.ShipServer.orbit(ship.symbol)
     {:noreply, socket}
   end
   def handle_event("sync", _, socket) do
     ship = socket.assigns.ship
-    Spacetraders.Genservers.Ship.sync(ship.symbol)
+    Spacetraders.ShipServer.sync(ship.symbol)
     {:noreply, socket}
   end
 end

@@ -1,19 +1,21 @@
 defmodule Spacetraders.Ship do
   use Ecto.Schema
   import Ecto.Changeset
+  alias Spacetraders.{Ship, Ship.Registration, Ship.Navigation, Ship.Fuel}
 
   schema "/my/ships" do
+    field :state, Ecto.Enum, values: [:idle, :extracting, :in_orbit, :docked, :in_transit, :selling], default: :idle
     field :agent_symbol, :string
     field :symbol, :string
-    embeds_one :nav, Spacetraders.Ship.Navigation
+    embeds_one :nav, Navigation
     field :crew, :any, virtual: true
-    field :fuel, :any, virtual: true
+    embeds_one :fuel, Fuel
     field :frame, :any, virtual: true
     field :reactor, :any, virtual: true
     field :engine, :any, virtual: true
     field :modules, {:array, :map}
     field :mounts, {:array, :map}
-    embeds_one :registration, Spacetraders.Ship.Registration
+    embeds_one :registration, Registration
     field :cargo, :any, virtual: true
   end
 
@@ -24,16 +26,24 @@ defmodule Spacetraders.Ship do
     end
 
     Enum.map(ships, fn attrs ->
-      changeset(%Spacetraders.Ship{agent_symbol: agent.symbol}, attrs)
+      state = case attrs["nav"]["status"] do
+        "DOCKED" -> :docked
+        "IN_ORBIT" -> :in_orbit
+        "IN_TRANSIT" -> :in_transit
+        _ -> :idle
+      end
+
+      changeset(%Ship{agent_symbol: agent.symbol, state: state}, attrs)
       |> apply_changes()
     end)
   end
 
   def changeset(ship, attrs) do
     ship
-    |> cast(attrs, [:agent_symbol, :symbol, :crew, :fuel, :frame, :reactor, :engine, :modules, :mounts, :cargo])
-    |> cast_embed(:registration, with: &Spacetraders.Ship.Registration.changeset/2)
-    |> cast_embed(:nav, with: &Spacetraders.Ship.Navigation.changeset/2)
-    |> validate_required([:agent_symbol, :symbol, :nav, :crew, :fuel, :frame, :reactor, :engine, :modules, :mounts, :registration, :cargo])
+    |> cast(attrs, [:state, :agent_symbol, :symbol, :crew, :frame, :reactor, :engine, :modules, :mounts, :cargo])
+    |> validate_required([:state, :agent_symbol, :symbol, :nav, :crew, :fuel, :frame, :reactor, :engine, :modules, :mounts, :registration, :cargo])
+    |> cast_embed(:registration, with: &Registration.changeset/2)
+    |> cast_embed(:nav, with: &Navigation.changeset/2)
+    |> cast_embed(:fuel, with: &Fuel.changeset/2)
   end
 end

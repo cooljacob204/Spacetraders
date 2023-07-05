@@ -16,4 +16,8 @@ defmodule Spacetraders.Api.Ship do
   def navigate(agent, ship, waypoint) do
     post(agent, "/my/ships/#{ship.symbol}/navigate", Jason.encode!(%{waypointSymbol: waypoint}))
   end
+
+  def extract(agent, ship) do
+    post(agent, "/my/ships/#{ship.symbol}/extract", "")
+  end
 end

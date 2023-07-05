@@ -5,14 +5,14 @@ defmodule Spacetraders.Genservers.Agent do
 
   def children_list do
     Enum.map(Spacetraders.Agent.list_agents(), fn agent ->
-      %{ id: process_id(agent.symbol),
+      %{ id: via_tuple(agent.symbol),
         start: {Spacetraders.Genservers.Agent, :start_link, [agent]}
       }
     end)
   end
 
   def start_link(agent) do
-    case GenServer.start_link(__MODULE__, agent, name: process_id(agent.symbol)) do
+    case GenServer.start_link(__MODULE__, agent, name: via_tuple(agent.symbol)) do
       {:ok, pid} ->
         Task.start(fn -> Spacetraders.Genservers.Agent.sync(agent.symbol) end)
         {:ok, pid}
@@ -20,23 +20,23 @@ defmodule Spacetraders.Genservers.Agent do
     end
   end
 
-  defp process_id(symbol),
+  defp via_tuple(symbol),
     do: {:via, Registry, {AgentRegistry, symbol}}
 
   def get(symbol) do
-    GenServer.call(process_id(symbol), :get)
+    GenServer.call(via_tuple(symbol), :get)
   end
 
   def update(symbol, attrs) do
-    GenServer.cast(process_id(symbol), {:update, attrs})
+    GenServer.cast(via_tuple(symbol), {:update, attrs})
   end
 
   def sync(symbol) do
-    GenServer.cast(process_id(symbol), :sync)
+    GenServer.cast(via_tuple(symbol), :sync)
   end
 
   def add_ship(symbol, ship_symbol) do
-    GenServer.cast(process_id(symbol), {:add_ship, ship_symbol})
+    GenServer.cast(via_tuple(symbol), {:add_ship, ship_symbol})
   end
 
   # Server
