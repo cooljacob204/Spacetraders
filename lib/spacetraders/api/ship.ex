@@ -20,4 +20,8 @@ defmodule Spacetraders.Api.Ship do
   def extract(agent, ship) do
     post(agent, "/my/ships/#{ship.symbol}/extract", "")
   end
+
+  def sell_item(agent, ship, symbol, units) do
+    post(agent, "/my/ships/#{ship.symbol}/sell", Jason.encode!(%{symbol: symbol, units: units}))
+  end
 end

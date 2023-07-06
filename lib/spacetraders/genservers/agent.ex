@@ -84,7 +84,7 @@ defmodule Spacetraders.Genservers.Agent do
     Phoenix.PubSub.subscribe(Spacetraders.PubSub, "agent-#{agent.symbol}")
   end
 
-  defp broadcast({:error, _reason} = error, _event), do: error
+  # defp broadcast({:error, _reason} = error, _event), do: error
   defp broadcast({:ok, %Spacetraders.Agent{} = agent}, event) do
     Phoenix.PubSub.broadcast(Spacetraders.PubSub, "agent-#{agent.symbol}", {event, agent})
 
