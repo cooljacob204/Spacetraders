@@ -19,7 +19,7 @@ defmodule Spacetraders.Ships do
   def extract(%Ship{state: :in_orbit} = ship) do
     case Ship.Extraction.extract(ship, agent(ship)) do
       {:ok, :cooldown} -> {:ok, ship |> update(%{state: :extracting})}
-      {:ok, :cargo_full} -> {:ok, ship}
+      {:ok, :cargo_full} -> {:cargo_full, ship}
       {:ok, cargo} -> {:ok, ship |> update(%{state: :extracting, cargo: cargo})}
       {:error, error} -> {{:error, error}, ship}
     end
@@ -34,7 +34,7 @@ defmodule Spacetraders.Ships do
   def extract_cooldown_ended(%Ship{state: :extracting} = ship) do
     case Ship.Extraction.extract(ship, agent(ship)) do
       {:ok, :cooldown} -> {:ok, ship}
-      {:ok, :cargo_full} -> {:ok, ship |> update(%{state: :in_orbit})}
+      {:ok, :cargo_full} -> {:cargo_full, ship |> update(%{state: :in_orbit})}
       {:ok, cargo} -> {:ok, ship |> update(%{state: :extracting, cargo: cargo})}
       {:error, error} -> {{:error, error}, ship}
     end
@@ -59,6 +59,13 @@ defmodule Spacetraders.Ships do
   def sell_cargo(%Ship{state: :docked, cargo: %{inventory: []}} = ship), do: {{:error, "cargo empty"}, ship}
   def sell_cargo(%Ship{state: :selling_cargo, cargo: %{inventory: []}} = ship), do: {:ok, ship |> update(%{state: :docked})}
   def sell_cargo(%Ship{state: :docked} = ship) do
+    sell_all_cargo(ship)
+  end
+  def sell_cargo(%Ship{state: :selling_cargo} = ship) do
+    sell_all_cargo(ship)
+  end
+  def sell_cargo(ship), do: {{:error, "Ship not docked"}, ship}
+  defp sell_all_cargo(ship) do
     item_to_sell = hd ship.cargo.inventory
 
     case Ship.Cargo.sell_item(ship, item_to_sell) do
@@ -69,7 +76,6 @@ defmodule Spacetraders.Ships do
       {:error, error} -> {{:error, error}, ship}
     end
   end
-  def sell_cargo(ship), do: {{:error, "Ship not docked"}, ship}
 
   def sync(ship) do
     %{"data" => attrs} = Spacetraders.Api.Ship.get_ship(agent(ship), ship.symbol)

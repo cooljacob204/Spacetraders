@@ -10,37 +10,37 @@ defmodule Spacetraders.Ship.Routines.ExtractAndSell do
   end
   defp start_routine(symbol, %Ship{state: :in_orbit}) do
     case Spacetraders.ShipServer.extract(symbol) do
-      {:ok, :cargo_full} -> Spacetraders.ShipServer.dock(symbol)
-      {:ok, _} -> {:ok, :extracting}
-      {:error, error} -> {:error, error}
+      :cargo_full -> Spacetraders.ShipServer.dock(symbol)
+      :ok -> {:ok, :extracting}
+      error -> {:error, error}
     end
   end
   defp start_routine(symbol, %Ship{state: :docked}) do
     case Spacetraders.ShipServer.sell_cargo(symbol) do
-      {:error, "No cargo to sell"} -> Spacetraders.ShipServer.orbit(symbol)
-      {:ok, _} -> {:ok, :selling_cargo}
-      {:error, error} -> {:error, error}
+      {:error, "cargo empty"} -> Spacetraders.ShipServer.orbit(symbol)
+      :ok -> {:ok, :selling_cargo}
+      error -> {:error, error}
     end
   end
   defp start_routine(_symbol, %Ship{state: :extracting}) do
-    {:ok, :extracting}
+    :ok
   end
   defp start_routine(_symbol, %Ship{state: :selling_cargo}) do
-    {:ok, :selling_cargo}
+    :ok
   end
   def transition(ship, :in_orbit, :extracting, _) do
     Task.start fn ->
       case Spacetraders.ShipServer.dock(ship.symbol) do
-        {:ok, _} -> {:ok, :docked}
-        {:error, error} -> {:error, error}
+        :ok -> {:ok, :docked}
+        error -> {:error, error}
       end
     end
   end
   def transition(ship, :docked, :in_orbit, _) do
     Task.start fn ->
       case Spacetraders.ShipServer.sell_cargo(ship.symbol) do
-        {:ok, _} -> {:ok, :selling_cargo}
-        {:error, error} -> {:error, error}
+        :ok -> {:ok, :selling_cargo}
+        error -> {:error, error}
       end
     end
   end
@@ -50,16 +50,16 @@ defmodule Spacetraders.Ship.Routines.ExtractAndSell do
   def transition(ship, :docked, :selling_cargo, _) do
     Task.start fn ->
       case Spacetraders.ShipServer.orbit(ship.symbol) do
-        {:ok, _} -> {:ok, :in_orbit}
-        {:error, error} -> {:error, error}
+        :ok -> {:ok, :in_orbit}
+        error -> {:error, error}
       end
     end
   end
   def transition(ship, :in_orbit, :docked, _) do
     Task.start fn ->
       case Spacetraders.ShipServer.extract(ship.symbol) do
-        {:ok, _} -> {:ok, :extracting}
-        {:error, error} -> {:error, error}
+        :ok -> {:ok, :extracting}
+        error -> {:error, error}
       end
     end
   end
