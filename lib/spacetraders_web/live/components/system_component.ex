@@ -11,26 +11,26 @@ defmodule SpacetradersWeb.Live.SystemComponent do
 
   def render(assigns) do
     ~H"""
-    <div class='border-2 rounded'>
+    <div>
       <div class='p-2'>
         <div class='text-xl font-bold'><%= assigns.system.symbol %></div>
-        <div>type: <%= assigns.system.type %></div>
-        <div>x: <%= assigns.system.x %></div>
-        <div>y: <%= assigns.system.y %></div>
-        <div class='text-lg font-bold mt-2'>Waypoints</div>
+        <div><span class='font-bold'>Type:</span> <%= assigns.system.type %></div>
+        <div><span class='font-bold'>X:</span><%= assigns.system.x %></div>
+        <div><span class='font-bold'>Y:</span><%= assigns.system.y %></div>
       </div>
-      <div class='border-t-2 p-2 mt-2'>
+      <div class='text-lg font-bold mt-2 pt-2'>Waypoints</div>
+      <div class=''>
           <%= for waypoint <- assigns.system.waypoints do %>
             <div class='border-2 rounded my-1 p-1 flex flex-row justify-between'>
               <div>
-                <div>symbol: <%= waypoint.symbol %></div>
-                <div>type: <%= waypoint.type %></div>
-                <div>x: <%= waypoint.x %></div>
-                <div>y: <%= waypoint.y %></div>
+                <div><span class='font-bold'>Symbol:</span> <%= waypoint.symbol %></div>
+                <div><span class='font-bold'>Type:</span> <%= waypoint.type %></div>
+                <div><span class='font-bold'>X:</span> <%= waypoint.x %></div>
+                <div><span class='font-bold'>Y:</span> <%= waypoint.y %></div>
               </div>
               <div>
                 <.button disabled={true}>show</.button>
-                <.button disabled={assigns.ship.nav.status == :DOCKED} phx-click="travel" value={waypoint.symbol} phx-target={@myself}>travel</.button>
+                <.button disabled={assigns.ship.state != :in_orbit} phx-click="travel" value={waypoint.symbol} phx-target={@myself}>travel</.button>
               </div>
             </div>
           <% end %>

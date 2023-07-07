@@ -50,9 +50,9 @@ defmodule SpacetradersWeb.ShipComponent do
             <div>
               <%= case assigns.ship.nav.status do %>
                 <% :DOCKED -> %>
-                  <.button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click="orbit" phx-target={@myself}>Orbit</.button>
+                  <.button class='rounded-full bg-cyan-500 text-white px-4 py-2' disabled={assigns.ship.state != :docked} phx-click="orbit" phx-target={@myself}>Orbit</.button>
                 <% :IN_ORBIT -> %>
-                  <.button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click="dock" phx-target={@myself}>Dock</.button>
+                  <.button class='rounded-full bg-cyan-500 text-white px-4 py-2' disabled={assigns.ship.state != :in_orbit} phx-click="dock" phx-target={@myself}>Dock</.button>
                 <% _ -> %>
               <% end %>
                 <.button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click={show_modal("ship-#{assigns.ship.symbol}-system")}>System</.button>
