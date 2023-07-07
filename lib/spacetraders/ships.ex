@@ -112,11 +112,16 @@ defmodule Spacetraders.Ships do
         {:ok, transitioned_ship} -> {:ok, transitioned_ship }
         {:error, _error} -> {:error, ship |> update(%{transition: %{}})}
       end
+    else
+      {:ok, ship}
     end
   end
 
   def subscribe(%Spacetraders.Ship{} = ship) do
     Phoenix.PubSub.subscribe(Spacetraders.PubSub, "ship-#{ship.symbol}")
+  end
+  def subscribe(symbol) do
+    Phoenix.PubSub.subscribe(Spacetraders.PubSub, "ship-#{symbol}")
   end
 
   defp broadcast({:ok, %Spacetraders.Ship{} = ship}, event) do

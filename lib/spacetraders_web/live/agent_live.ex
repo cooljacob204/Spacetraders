@@ -3,12 +3,15 @@ defmodule SpacetradersWeb.AgentLive do
 
   def mount(params, _session, socket) do
     agent = Spacetraders.Genservers.Agent.get(String.upcase(params["symbol"]))
-    Spacetraders.Genservers.Agent.subscribe(agent)
+    if connected?(socket) do
+      Spacetraders.Genservers.Agent.subscribe(agent)
+    end
 
     {
       :ok,
       socket
       |> assign(:agent, agent)
+      |> assign(:subscribed_ships, subscribe_to_ships(agent.ships, socket))
     }
   end
 
@@ -24,17 +27,47 @@ defmodule SpacetradersWeb.AgentLive do
       </header>
       <content class='flex flex-row flex-wrap'>
         <%= for ship <- Enum.sort(assigns.agent.ships) do %>
-            <.live_component module={SpacetradersWeb.ShipComponent} id={ship} ship_symbol={ship} agent={assigns.agent}/>
+          <.live_component module={SpacetradersWeb.ShipComponent} id={ship} ship_symbol={ship} agent={assigns.agent}/>
         <% end %>
       </content>
     """
   end
 
   def handle_info({:agent_updated, agent}, socket) do
-    {:noreply, socket |> assign(:agent, agent)}
+    {:noreply, socket |> assign(:agent, agent) |> assign(:subscribed_ships, subscribe_to_ships(agent.ships, socket))}
   end
   def handle_info({:ship_updated, ship}, socket) do
     send_update SpacetradersWeb.ShipComponent, id: ship.symbol, ship_symbol: ship.symbol, agent: socket.assigns.agent
     {:noreply, socket}
+  end
+
+  defp subscribed_ships(socket) do
+    if connected?(socket) do
+      if Map.has_key?(socket.assigns, :subscribed_ships) do
+        socket.assigns.subscribed_ships
+      else
+        MapSet.new()
+      end
+    else
+      MapSet.new()
+    end
+  end
+
+  defp subscribe_to_ships(ships, socket) do
+    if connected?(socket) do
+      subscribed_ships = subscribed_ships(socket)
+
+      subscribed_ships = Enum.reduce(ships, subscribed_ships, fn ship, subscribed_ships ->
+        unless MapSet.member?(subscribed_ships, ship) do
+          Spacetraders.Ships.subscribe(ship)
+
+          MapSet.put(subscribed_ships, ship)
+        end
+      end)
+
+      subscribed_ships
+    else
+      MapSet.new()
+    end
   end
 end
