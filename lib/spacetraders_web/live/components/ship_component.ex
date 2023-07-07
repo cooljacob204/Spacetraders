@@ -16,7 +16,7 @@ defmodule SpacetradersWeb.ShipComponent do
       <.modal id={"ship-#{assigns.ship.symbol}-inventory"}>
         <.live_component module={SpacetradersWeb.Live.InventoryComponent} id={"ship-#{assigns.ship.symbol}-inventory-live"} inventory={assigns.ship.cargo.inventory}/>
       </.modal>
-      <div class='text-xl font-bold px-1 pt-2'><%= assigns.ship.symbol %></div>
+      <div class='text-xl font-bold px-1 pt-2'><%= assigns.ship.symbol %> - <%= transition_description(assigns.ship) %></div>
       <div class='text-l font-bold px-1 pb-2'>Status: <%= assigns.ship.state %></div>
       <div class='flex flex-row gap-1'>
         <div class='grid gap-1 col-span-1 justify-items-stretch'>
@@ -86,6 +86,23 @@ defmodule SpacetradersWeb.ShipComponent do
       </div>
     </div>
     """
+  end
+
+  defp transition_description(ship) do
+    if ship.transition.callback do
+      {:module, function_module} = Function.info(ship.transition.callback, :module)
+
+      function_module.description()
+    else
+      case ship.state do
+        :idle -> "Idle"
+        :extracting -> "Extracting"
+        :in_orbit -> "Idle in Orbit"
+        :docked -> "Idle in Dock"
+        :in_transit -> "In Transit"
+        :selling_cargo -> "Selling Cargo"
+      end
+    end
   end
 
   def handle_event("dock", _, socket) do

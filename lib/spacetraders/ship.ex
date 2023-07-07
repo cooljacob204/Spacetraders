@@ -1,10 +1,11 @@
 defmodule Spacetraders.Ship do
   use Ecto.Schema
   import Ecto.Changeset
-  alias Spacetraders.{Ship, Ship.Registration, Ship.Navigation, Ship.Fuel, Ship.Cargo}
+  alias Spacetraders.{Ship, Ship.Registration, Ship.Navigation, Ship.Fuel, Ship.Cargo, Ship.Transition}
 
   schema "/my/ships" do
     field :state, Ecto.Enum, values: [:idle, :extracting, :in_orbit, :docked, :in_transit, :selling_cargo], default: :idle
+    embeds_one :transition, Transition
     field :agent_symbol, :string
     field :symbol, :string
     embeds_one :nav, Navigation
@@ -25,17 +26,25 @@ defmodule Spacetraders.Ship do
       %{"error" => error } -> raise "Error: #{error}"
     end
 
-    Enum.map(ships, fn attrs ->
-      state = case attrs["nav"]["status"] do
-        "DOCKED" -> :docked
-        "IN_ORBIT" -> :in_orbit
-        "IN_TRANSIT" -> :in_transit
-        _ -> :idle
-      end
+    Enum.map(ships, fn attrs -> prep_ship(attrs, agent) end)
+  end
 
-      changeset(%Ship{agent_symbol: agent.symbol, state: state}, attrs)
-      |> apply_changes()
-    end)
+  def get_ship(agent, symbol) do
+    %{"data" => attrs} = Spacetraders.Api.Ship.get_ship(agent, symbol)
+
+    prep_ship(attrs, agent)
+  end
+
+  defp prep_ship(attrs, agent) do
+    state = case attrs["nav"]["status"] do
+      "DOCKED" -> :docked
+      "IN_ORBIT" -> :in_orbit
+      "IN_TRANSIT" -> :in_transit
+      _ -> :idle
+    end
+
+    changeset(%Ship{agent_symbol: agent.symbol, state: state, transition: %Transition{}}, attrs)
+    |> apply_changes()
   end
 
   def changeset(ship, attrs) do
@@ -46,5 +55,6 @@ defmodule Spacetraders.Ship do
     |> cast_embed(:nav, with: &Navigation.changeset/2)
     |> cast_embed(:fuel, with: &Fuel.changeset/2)
     |> cast_embed(:cargo, with: &Cargo.changeset/2)
+    |> cast_embed(:transition, with: &Transition.changeset/2)
   end
 end

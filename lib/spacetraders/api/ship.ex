@@ -24,4 +24,8 @@ defmodule Spacetraders.Api.Ship do
   def sell_item(agent, ship, symbol, units) do
     post(agent, "/my/ships/#{ship.symbol}/sell", Jason.encode!(%{symbol: symbol, units: units}))
   end
+
+  def refuel(agent, ship) do
+    post(agent, "/my/ships/#{ship.symbol}/refuel", "")
+  end
 end

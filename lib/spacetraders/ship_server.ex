@@ -43,6 +43,10 @@ defmodule Spacetraders.ShipServer do
     GenServer.call(via_tuple(symbol), :sell_cargo)
   end
 
+  def set_transition(symbol, callback, data) do
+    GenServer.call(via_tuple(symbol), {:set_transition, callback, data})
+  end
+
   defp via_tuple(symbol), do: {:via, Registry, {ShipRegistry, symbol}}
 
   defp children_list(agent) do
@@ -58,8 +62,7 @@ defmodule Spacetraders.ShipServer do
   end
 
   @impl true
-  def init(%Ship{} = ship),
-    do: {:ok, ship}
+  def init(%Ship{} = ship), do: {:ok, ship}
 
   @impl true
   def handle_call(:get, _from, ship),
@@ -74,20 +77,20 @@ defmodule Spacetraders.ShipServer do
 
   @impl true
   def handle_call(:sync, _from, ship) do
-    {:reply, :ok, run_sync(ship)}
+    {:reply, {:ok, :synced}, run_sync(ship)}
   end
   def handle_call(:dock, _from, %Ship{state: :in_orbit} = ship) do
     %{"data" => attrs} = Spacetraders.Api.Ship.dock(agent(ship), ship)
     attrs = Map.put(attrs, "state", "docked")
 
-    {:reply, :ok, ship |> update(attrs)}
+    {:reply, {:ok, :docked}, ship |> update(attrs)}
   end
   def handle_call(:dock, _from, ship), do: {:reply, {:error, "Ship not in orbit"}, ship}
   def handle_call(:orbit, _from, %Ship{state: :docked} = ship) do
     %{"data" => attrs} = Spacetraders.Api.Ship.orbit(agent(ship), ship)
     attrs = Map.put(attrs, "state", "in_orbit")
 
-    {:reply, :ok, ship |> update(attrs)}
+    {:reply, {:ok, :in_orbit}, ship |> update(attrs)}
   end
   def handle_call(:orbit, _from, ship), do: {:reply, {:error, "Ship not docked"}, ship}
   def handle_call(:extract, _from, %Ship{state: :in_orbit} = ship) do
@@ -114,7 +117,7 @@ defmodule Spacetraders.ShipServer do
     ship = update(ship, attrs)
 
     {:ok, arrival_time, 0} = DateTime.from_iso8601(attrs["nav"]["route"]["arrival"])
-    Process.send_after(self(), :navigation_complete, (DateTime.to_unix(arrival_time) - System.system_time(:second) + 1) * 1000)
+    Process.send_after(self(), :navigation_complete, (DateTime.to_unix(arrival_time) - System.system_time(:second)) * 1000)
 
     {:reply, ship, ship}
   end
@@ -132,6 +135,9 @@ defmodule Spacetraders.ShipServer do
     end
   end
   def handle_call(:sell_cargo, _from, ship), do: {:reply, {:error, "Ship not docked"}, ship}
+  def handle_call({:set_transition, callback, data}, _from, ship) do
+    {:reply, {:ok, :transition_set}, ship |> update(%{transition: %{callback: callback, data: data}})}
+  end
 
   @impl true
   def handle_info(:extract_cooldown_ended, %Ship{state: :extracting} = ship) do
@@ -172,13 +178,22 @@ defmodule Spacetraders.ShipServer do
   defp agent(%Ship{agent_symbol: agent_symbol}), do: Spacetraders.Genservers.Agent.get(agent_symbol)
 
   defp update(ship, attrs) do
-    ship = ship
+    updated_ship = ship
       |> Ship.changeset(attrs)
       |> Ecto.Changeset.apply_changes()
 
-    broadcast({:ok, ship}, :ship_updated)
+    broadcast({:ok, updated_ship}, :ship_updated)
 
-    ship
+    if updated_ship.state != ship.state do
+      transition(ship, updated_ship)
+    end
+
+    updated_ship
+  end
+  defp transition(old_ship, ship) do
+    if ship.transition.callback do
+      ship.transition.callback.(ship, ship.state, old_ship.state, ship.transition.data)
+    end
   end
 
   def subscribe(%Spacetraders.Ship{} = ship) do

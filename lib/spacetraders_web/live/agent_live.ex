@@ -23,7 +23,7 @@ defmodule SpacetradersWeb.AgentLive do
         </div>
       </header>
       <content class='flex flex-row'>
-        <%= for ship <- assigns.agent.ships do %>
+        <%= for ship <- Enum.sort(assigns.agent.ships) do %>
             <.live_component module={SpacetradersWeb.ShipComponent} id={ship} ship_symbol={ship} agent={assigns.agent}/>
         <% end %>
       </content>

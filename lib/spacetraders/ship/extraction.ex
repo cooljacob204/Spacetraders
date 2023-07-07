@@ -2,15 +2,22 @@ defmodule Spacetraders.Ship.Extraction do
   alias Spacetraders.Api
 
   def extract(ship, agent) do
-    # return {:ok, :cargo_full} if ship.cargo.capacity == ship.cargo.units
-    case Api.Ship.extract(agent, ship) do
-      %{"data" => %{"cargo" => cargo, "cooldown" => %{"remaining_seconds" => cooldown}}} -> extracted(cargo,  cooldown)
-      %{"error" => error} -> error(error)
+    if ship.cargo.capacity == ship.cargo.units do
+      {:ok, :cargo_full}
+    else
+      case Api.Ship.extract(agent, ship) do
+        %{"data" => %{"cargo" => cargo, "cooldown" => %{"remaining_seconds" => cooldown}}} -> extracted(cargo,  cooldown)
+        %{"error" => error} -> error(error)
+      end
     end
   end
 
   defp extracted(cargo, cooldown) do
-    Process.send_after(self(), :extract_cooldown_ended, cooldown * 1000)
+    if cargo["capacity"] == cargo["units"] do
+      send(self(), :extract_cooldown_ended)
+    else
+      Process.send_after(self(), :extract_cooldown_ended, cooldown * 1000)
+    end
 
     {:ok, cargo}
   end
