@@ -4,7 +4,7 @@ defmodule Spacetraders.Ship do
   alias Spacetraders.{Ship, Ship.Registration, Ship.Navigation, Ship.Fuel, Ship.Cargo, Ship.Transition}
 
   schema "/my/ships" do
-    field :state, Ecto.Enum, values: [:idle, :extracting, :in_orbit, :docked, :in_transit, :selling_cargo], default: :idle
+    field :state, Ecto.Enum, values: [:idle, :extracting, :in_orbit, :docked, :in_transit, :selling_cargo, :refining], default: :idle
     embeds_one :transition, Transition
     field :agent_symbol, :string
     field :symbol, :string

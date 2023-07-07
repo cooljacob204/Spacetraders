@@ -46,6 +46,9 @@ defmodule Spacetraders.ShipServer do
   def set_transition(symbol, callback, data) do
     GenServer.call(via_tuple(symbol), {:set_transition, callback, data})
   end
+  def remove_transition(symbol) do
+    GenServer.call(via_tuple(symbol), :remove_transition)
+  end
 
   defp via_tuple(symbol), do: {:via, Registry, {ShipRegistry, symbol}}
 
@@ -99,6 +102,10 @@ defmodule Spacetraders.ShipServer do
   end
   def handle_call({:set_transition, callback, data}, _from, ship) do
     {resp, ship} = Spacetraders.Ships.set_transition(ship, callback, data)
+    {:reply, resp, ship}
+  end
+  def handle_call(:remove_transition, _from, ship) do
+    {resp, ship} = Spacetraders.Ships.remove_transition(ship)
     {:reply, resp, ship}
   end
 

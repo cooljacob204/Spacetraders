@@ -9,9 +9,10 @@ defmodule Spacetraders.Ship.Routines.ExtractAndSell do
     start_routine(symbol, ship)
   end
   defp start_routine(symbol, %Ship{state: :in_orbit}) do
-    Spacetraders.ShipServer.extract(symbol)
-
-    :ok
+    case Spacetraders.ShipServer.extract(symbol) do
+      :cargo_full -> Spacetraders.ShipServer.dock(symbol)
+      _ -> :ok
+    end
   end
   defp start_routine(symbol, %Ship{state: :docked}) do
     Spacetraders.ShipServer.sell_cargo(symbol)

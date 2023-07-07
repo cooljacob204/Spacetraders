@@ -88,6 +88,9 @@ defmodule Spacetraders.Ships do
   def set_transition(ship, callback, data) do
     {:ok, ship |> update(%{transition: %{callback: callback, data: data}})}
   end
+  def remove_transition(ship) do
+    {:ok, ship |> update(%{transition: %{callback: nil, data: nil}})}
+  end
 
   defp update(ship, attrs) do
     updated_ship = ship
@@ -110,7 +113,7 @@ defmodule Spacetraders.Ships do
     if ship.transition.callback do
       case ship.transition.callback.(ship, state, old_state, data) do
         {:ok, transitioned_ship} -> {:ok, transitioned_ship }
-        {:error, _error} -> {:error, ship |> update(%{transition: %{}})}
+        {:error, _error} -> {:error, ship |> update(%{transition: %{callback: nil, data: nil}})}
       end
     else
       {:ok, ship}

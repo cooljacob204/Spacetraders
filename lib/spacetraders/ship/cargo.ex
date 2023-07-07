@@ -1,7 +1,7 @@
 defmodule Spacetraders.Ship.Cargo do
   use Ecto.Schema
   import Ecto.Changeset
-  alias Spacetraders.Ship.Cargo.Item
+  alias Spacetraders.{Ship.Cargo.Item, MarketTransaction}
 
   embedded_schema do
     field :capacity, :integer
@@ -20,8 +20,13 @@ defmodule Spacetraders.Ship.Cargo do
     agent = Spacetraders.Genservers.Agent.get(ship.agent_symbol)
 
     case Spacetraders.Api.Ship.sell_item(agent, ship, item.symbol, item.units) do
-      {:ok, %{"data" => %{"cargo" => cargo, "agent" => agent, "transaction" => _transaction}}} -> {:ok, cargo, agent}
+      {:ok, %{"data" => %{"cargo" => cargo, "agent" => agent, "transaction" => transaction}}} ->
+        log_transaction(transaction)
+        {:ok, cargo, agent}
       {:ok, %{"error" => error }} -> {:error, error}
     end
+  end
+  defp log_transaction(transaction) do
+    MarketTransaction.create(%MarketTransaction{} |> MarketTransaction.changeset(transaction) |> apply_changes())
   end
 end
