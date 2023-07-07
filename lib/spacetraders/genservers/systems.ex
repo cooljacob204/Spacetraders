@@ -24,10 +24,10 @@ defmodule Spacetraders.Genservers.Systems do
     case Map.get(systems, system_symbol) do
       nil ->
         case Spacetraders.Api.System.get_system(agent, system_symbol) do
-          %{"data" => data} ->
+          {:ok, %{"data" => data}} ->
             system = Spacetraders.System.changeset(%Spacetraders.System{}, data) |> Ecto.Changeset.apply_changes()
             {:reply, {:ok, system}, Map.put(systems, system_symbol, system)}
-          %{"error" => error} ->
+          {:ok, %{"error" => error}} ->
             {:reply, {:error, error}, systems}
         end
       system ->

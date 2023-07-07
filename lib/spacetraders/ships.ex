@@ -2,14 +2,14 @@ defmodule Spacetraders.Ships do
   alias Spacetraders.Ship
 
   def orbit(%Ship{state: :docked} = ship) do
-    %{"data" => attrs} = Spacetraders.Api.Ship.orbit(agent(ship), ship)
+    {:ok, %{"data" => attrs}} = Spacetraders.Api.Ship.orbit(agent(ship), ship)
     attrs = Map.put(attrs, "state", "in_orbit")
 
     {:ok, ship |> update(attrs)}
   end
   def orbit(ship), do: {{:error, "Ship not docked"}, ship}
   def dock(%Ship{state: :in_orbit} = ship) do
-    %{"data" => attrs} = Spacetraders.Api.Ship.dock(agent(ship), ship)
+    {:ok, %{"data" => attrs}} = Spacetraders.Api.Ship.dock(agent(ship), ship)
     attrs = Map.put(attrs, "state", "docked")
 
     {:ok, ship |> update(attrs)}
@@ -42,7 +42,7 @@ defmodule Spacetraders.Ships do
   def extract_cooldown_ended(ship), do: {:ok, ship}
 
   def navigate(%Ship{state: :in_orbit} = ship, waypoint) do
-    %{"data" => attrs} = Spacetraders.Api.Ship.navigate(agent(ship), ship, waypoint)
+    {:ok, %{"data" => attrs}} = Spacetraders.Api.Ship.navigate(agent(ship), ship, waypoint)
     attrs = Map.put(attrs, "state", "in_transit")
 
     ship = update(ship, attrs)
@@ -78,7 +78,7 @@ defmodule Spacetraders.Ships do
   end
 
   def sync(ship) do
-    %{"data" => attrs} = Spacetraders.Api.Ship.get_ship(agent(ship), ship.symbol)
+    {:ok, %{"data" => attrs}}= Spacetraders.Api.Ship.get_ship(agent(ship), ship.symbol)
 
     {:ok, ship |> update(attrs)}
   end

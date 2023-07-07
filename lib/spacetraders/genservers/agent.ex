@@ -71,8 +71,8 @@ defmodule Spacetraders.Genservers.Agent do
   end
   def handle_cast(:sync, agent) do
     attrs = case Spacetraders.Api.Agent.my_agent(agent) do
-      %{"data" => data} -> data
-      %{"error" => error } -> raise "Error: #{error}"
+      {:ok, %{"data" => data}} -> data
+      {:ok, %{"error" => error }} -> raise "Error: #{error}"
     end
 
     update(agent.symbol, attrs)

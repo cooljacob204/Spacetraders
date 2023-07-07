@@ -6,8 +6,8 @@ defmodule Spacetraders.Ship.Extraction do
       {:ok, :cargo_full}
     else
       case Api.Ship.extract(agent, ship) do
-        %{"data" => %{"cargo" => cargo, "cooldown" => %{"remaining_seconds" => cooldown}}} -> extracted(cargo,  cooldown)
-        %{"error" => error} -> error(error)
+        {:ok, %{"data" => %{"cargo" => cargo, "cooldown" => %{"remaining_seconds" => cooldown}}}} -> extracted(cargo,  cooldown)
+        {:ok, %{"error" => error}} -> error(error)
       end
     end
   end

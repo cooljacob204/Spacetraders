@@ -22,15 +22,15 @@ defmodule Spacetraders.Ship do
 
   def list_ships(agent) do
     ships = case Spacetraders.Api.Agent.get_ships(agent) do
-      %{"data" => data} -> data
-      %{"error" => error } -> raise "Error: #{error}"
+      {:ok, %{"data" => data}} -> data
+      {:ok, %{"error" => error }} -> raise "Error: #{error}"
     end
 
     Enum.map(ships, fn attrs -> prep_ship(attrs, agent) end)
   end
 
   def get_ship(agent, symbol) do
-    %{"data" => attrs} = Spacetraders.Api.Ship.get_ship(agent, symbol)
+    {:ok, %{"data" => attrs}} = Spacetraders.Api.Ship.get_ship(agent, symbol)
 
     prep_ship(attrs, agent)
   end

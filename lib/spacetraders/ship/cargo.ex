@@ -20,8 +20,8 @@ defmodule Spacetraders.Ship.Cargo do
     agent = Spacetraders.Genservers.Agent.get(ship.agent_symbol)
 
     case Spacetraders.Api.Ship.sell_item(agent, ship, item.symbol, item.units) do
-      %{"data" => %{"cargo" => cargo, "agent" => agent, "transaction" => _transaction}} -> {:ok, cargo, agent}
-      %{"error" => error } -> {:error, error}
+      {:ok, %{"data" => %{"cargo" => cargo, "agent" => agent, "transaction" => _transaction}}} -> {:ok, cargo, agent}
+      {:ok, %{"error" => error }} -> {:error, error}
     end
   end
 end
