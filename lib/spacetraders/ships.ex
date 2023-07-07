@@ -80,7 +80,7 @@ defmodule Spacetraders.Ships do
   end
 
   def sync(ship) do
-    {:ok, %{"data" => attrs}}= Spacetraders.Api.Ship.get_ship(agent(ship), ship.symbol)
+    {:ok, %{"data" => attrs}} = Spacetraders.Api.Ship.get_ship(agent(ship), ship.symbol)
 
     {:ok, ship |> update(attrs)}
   end
