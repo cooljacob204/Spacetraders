@@ -59,7 +59,9 @@ defmodule Spacetraders.Ships do
   def sell_cargo(%Ship{state: :docked, cargo: %{inventory: []}} = ship), do: {{:error, "cargo empty"}, ship}
   def sell_cargo(%Ship{state: :selling_cargo, cargo: %{inventory: []}} = ship), do: {:ok, ship |> update(%{state: :docked})}
   def sell_cargo(%Ship{state: :docked} = ship) do
-    sell_all_cargo(ship)
+    send(self(), :sell_cargo)
+
+    {:ok, ship |> update(%{state: :selling_cargo})}
   end
   def sell_cargo(%Ship{state: :selling_cargo} = ship) do
     sell_all_cargo(ship)
@@ -72,7 +74,7 @@ defmodule Spacetraders.Ships do
       {:ok, cargo, agent} ->
         Spacetraders.Genservers.Agent.update(agent["symbol"], agent)
         send(self(), :sell_cargo)
-        {:ok, ship |> update(%{state: :selling_cargo, cargo: cargo})}
+        {:ok, ship |> update(%{cargo: cargo})}
       {:error, error} -> {{:error, error}, ship}
     end
   end
@@ -95,14 +97,21 @@ defmodule Spacetraders.Ships do
     broadcast({:ok, updated_ship}, :ship_updated)
 
     if updated_ship.state != ship.state do
-      transition(ship, updated_ship)
-    end
+      IO.puts "Ship #{ship.symbol} transitioned from #{ship.state} to #{updated_ship.state}"
+      {_, transitioned_ship} = transition(updated_ship, updated_ship.state, ship.state, ship.transition.data)
 
-    updated_ship
+      transitioned_ship
+    else
+      updated_ship
+    end
   end
-  defp transition(old_ship, ship) do
+
+  def transition(ship, state, old_state, data) do
     if ship.transition.callback do
-      ship.transition.callback.(ship, ship.state, old_ship.state, ship.transition.data)
+      case ship.transition.callback.(ship, state, old_state, data) do
+        {:ok, transitioned_ship} -> {:ok, transitioned_ship }
+        {:error, _error} -> {:error, ship |> update(%{transition: %{}})}
+      end
     end
   end
 

@@ -9,18 +9,14 @@ defmodule Spacetraders.Ship.Routines.ExtractAndSell do
     start_routine(symbol, ship)
   end
   defp start_routine(symbol, %Ship{state: :in_orbit}) do
-    case Spacetraders.ShipServer.extract(symbol) do
-      :cargo_full -> Spacetraders.ShipServer.dock(symbol)
-      :ok -> {:ok, :extracting}
-      error -> {:error, error}
-    end
+    Spacetraders.ShipServer.extract(symbol)
+
+    :ok
   end
   defp start_routine(symbol, %Ship{state: :docked}) do
-    case Spacetraders.ShipServer.sell_cargo(symbol) do
-      {:error, "cargo empty"} -> Spacetraders.ShipServer.orbit(symbol)
-      :ok -> {:ok, :selling_cargo}
-      error -> {:error, error}
-    end
+    Spacetraders.ShipServer.sell_cargo(symbol)
+
+    :ok
   end
   defp start_routine(_symbol, %Ship{state: :extracting}) do
     :ok
@@ -28,43 +24,25 @@ defmodule Spacetraders.Ship.Routines.ExtractAndSell do
   defp start_routine(_symbol, %Ship{state: :selling_cargo}) do
     :ok
   end
+
+  # Server Callbacks
   def transition(ship, :in_orbit, :extracting, _) do
-    Task.start fn ->
-      case Spacetraders.ShipServer.dock(ship.symbol) do
-        :ok -> {:ok, :docked}
-        error -> {:error, error}
-      end
-    end
+    Spacetraders.Ships.dock(ship)
   end
   def transition(ship, :docked, :in_orbit, _) do
-    Task.start fn ->
-      case Spacetraders.ShipServer.sell_cargo(ship.symbol) do
-        :ok -> {:ok, :selling_cargo}
-        error -> {:error, error}
-      end
-    end
+    Spacetraders.Ships.sell_cargo(ship)
   end
-  def transition(_ship, :selling_cargo, :docked, _) do
-    :noop
+  def transition(ship, :selling_cargo, :docked, _) do
+    {:ok, ship}
   end
   def transition(ship, :docked, :selling_cargo, _) do
-    Task.start fn ->
-      case Spacetraders.ShipServer.orbit(ship.symbol) do
-        :ok -> {:ok, :in_orbit}
-        error -> {:error, error}
-      end
-    end
+    Spacetraders.Ships.orbit(ship)
   end
   def transition(ship, :in_orbit, :docked, _) do
-    Task.start fn ->
-      case Spacetraders.ShipServer.extract(ship.symbol) do
-        :ok -> {:ok, :extracting}
-        error -> {:error, error}
-      end
-    end
+    Spacetraders.Ships.extract(ship)
   end
-  def transition(_ship, :extracting, :in_orbit, _) do
-    :noop
+  def transition(ship, :extracting, :in_orbit, _) do
+    {:ok, ship}
   end
 
   def transition(ship, state, old_state, _) do
