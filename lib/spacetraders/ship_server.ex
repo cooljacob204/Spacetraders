@@ -69,141 +69,50 @@ defmodule Spacetraders.ShipServer do
     do: {:reply, ship, ship}
 
   @impl true
-  def handle_call({:update, attrs}, _from, ship) do
-    ship = update(ship, attrs)
-
-    {:reply, ship, ship}
-  end
-
-  @impl true
   def handle_call(:sync, _from, ship) do
-    {:reply, {:ok, :synced}, run_sync(ship)}
+    {resp, ship} = Spacetraders.Ships.sync(ship)
+    {:reply, resp, ship}
   end
-  def handle_call(:dock, _from, %Ship{state: :in_orbit} = ship) do
-    %{"data" => attrs} = Spacetraders.Api.Ship.dock(agent(ship), ship)
-    attrs = Map.put(attrs, "state", "docked")
-
-    {:reply, {:ok, :docked}, ship |> update(attrs)}
+  def handle_call(:dock, _from, ship) do
+    {resp, ship} = Spacetraders.Ships.dock(ship)
+    {:reply, resp, ship}
   end
-  def handle_call(:dock, _from, ship), do: {:reply, {:error, "Ship not in orbit"}, ship}
-  def handle_call(:orbit, _from, %Ship{state: :docked} = ship) do
-    %{"data" => attrs} = Spacetraders.Api.Ship.orbit(agent(ship), ship)
-    attrs = Map.put(attrs, "state", "in_orbit")
-
-    {:reply, {:ok, :in_orbit}, ship |> update(attrs)}
+  def handle_call(:orbit, _from, ship) do
+    {resp, ship} = Spacetraders.Ships.orbit(ship)
+    {:reply, resp, ship}
   end
-  def handle_call(:orbit, _from, ship), do: {:reply, {:error, "Ship not docked"}, ship}
-  def handle_call(:extract, _from, %Ship{state: :in_orbit} = ship) do
-    case Ship.Extraction.extract(ship, agent(ship)) do
-      {:ok, :cooldown} -> {:reply, {:ok, :cooldown}, ship |> update(%{state: :extracting})}
-      {:ok, :cargo_full} -> {:reply, {:ok, :cargo_full}, ship}
-      {:ok, cargo} -> {:reply, {:ok, :extracting}, ship |> update(%{state: :extracting, cargo: cargo})}
-      {:error, error} -> {:reply, error, ship}
-    end
+  def handle_call(:extract, _from, ship) do
+    {resp, ship} = Spacetraders.Ships.extract(ship)
+    {:reply, resp, ship}
   end
-  def handle_call(:extract, _from, ship), do: {:reply, {:error, "Ship not in orbit"}, ship}
-  def handle_call(:stop_extracting, _from, %Ship{state: :extracting} = ship), do:
-    {:reply, :ok, ship |> update(%{state: :in_orbit})}
-  def handle_call(:stop_extracting, _from, ship), do: {:reply, {:error, "Ship not extracting"}, ship}
-  def handle_call(:idle, _from, %Ship{} = ship) do
-    ship = update(ship, %{state: :idle})
-
-    {:reply, :ok, ship}
+  def handle_call(:stop_extracting, _from, ship) do
+    {resp, ship} = Spacetraders.Ships.stop_extracting(ship)
+    {:reply, resp, ship}
   end
-  def handle_call({:navigate, waypoint}, _from, %Ship{state: :in_orbit} = ship) do
-    %{"data" => attrs} = Spacetraders.Api.Ship.navigate(agent(ship), ship, waypoint)
-    attrs = Map.put(attrs, "state", "in_transit")
-
-    ship = update(ship, attrs)
-
-    {:ok, arrival_time, 0} = DateTime.from_iso8601(attrs["nav"]["route"]["arrival"])
-    Process.send_after(self(), :navigation_complete, (DateTime.to_unix(arrival_time) - System.system_time(:second)) * 1000)
-
-    {:reply, ship, ship}
+  def handle_call({:navigate, waypoint}, _from, ship) do
+    {resp, ship} = Spacetraders.Ships.navigate(ship, waypoint)
+    {:reply, resp, ship}
   end
-  def handle_call({:navigate, _waypoint}, _from, ship), do: {:reply, {:error, "Ship not in orbit"}, ship}
-  def handle_call(:sell_cargo, _from, %Ship{state: :docked, cargo: %{inventory: []}} = ship), do: {:reply, {:error, "No cargo to sell"}, ship}
-  def handle_call(:sell_cargo, _from, %Ship{state: :docked} = ship) do
-    item_to_sell = hd ship.cargo.inventory
-
-    case Ship.Cargo.sell_item(ship, item_to_sell) do
-      {:ok, cargo, agent} ->
-        Spacetraders.Genservers.Agent.update(agent["symbol"], agent)
-        send(self(), :sell_cargo)
-        {:reply, {:ok, :selling}, ship |> update(%{state: :selling_cargo, cargo: cargo})}
-      {:error, error} -> {:reply, error, ship}
-    end
+  def handle_call(:sell_cargo, _from, ship) do
+    {resp, ship} = Spacetraders.Ships.sell_cargo(ship)
+    {:reply, resp, ship}
   end
-  def handle_call(:sell_cargo, _from, ship), do: {:reply, {:error, "Ship not docked"}, ship}
   def handle_call({:set_transition, callback, data}, _from, ship) do
-    {:reply, {:ok, :transition_set}, ship |> update(%{transition: %{callback: callback, data: data}})}
+    {resp, ship} = Spacetraders.Ships.set_transition(ship, callback, data)
+    {:reply, resp, ship}
   end
 
   @impl true
-  def handle_info(:extract_cooldown_ended, %Ship{state: :extracting} = ship) do
-    case Ship.Extraction.extract(ship, agent(ship)) do
-      {:ok, :cooldown} -> {:noreply, ship}
-      {:ok, :cargo_full} -> {:noreply, ship |> update(%{state: :in_orbit})}
-      {:ok, cargo} -> {:noreply, ship |> update(%{state: :extracting, cargo: cargo})}
-      {:error, _error} -> {:noreply, ship |> update(%{state: :in_orbit})}
-    end
-  end
-  def handle_info(:extract_cooldown_ended, ship), do: {:noreply, ship}
-  def handle_info(:navigation_complete, %Ship{state: :in_transit} = ship) do
-    update(ship, %{state: :in_orbit, nav: %{status: :IN_ORBIT}})
-
+  def handle_info(:extract_cooldown_ended, ship) do
+    {_, ship} = Spacetraders.Ships.extract_cooldown_ended(ship)
     {:noreply, ship}
   end
-  def handle_info(:navigation_complete, ship), do: {:noreply, ship}
-  def handle_info(:sell_cargo, %Ship{state: :selling_cargo, cargo: %{inventory: []}} = ship) do
-    {:noreply, ship |> update(%{state: :docked})}
+  def handle_info(:navigation_complete, ship) do
+    {_, ship} = Spacetraders.Ships.navigation_complete(ship)
+    {:noreply, ship}
   end
-  def handle_info(:sell_cargo, %Ship{state: :selling_cargo} = ship) do
-    case Ship.Cargo.sell_item(ship, hd(ship.cargo.inventory)) do
-      {:ok, cargo, agent} ->
-        Spacetraders.Genservers.Agent.update(agent["symbol"], agent)
-        send(self(), :sell_cargo)
-        {:noreply, ship |> update(%{state: :selling_cargo, cargo: cargo})}
-      {:error, _error} -> {:noreply, ship |> update(%{state: :docked})}
-    end
-  end
-  def handle_info(:sell_cargo, ship), do: {:noreply, ship}
-
-  defp run_sync(ship) do
-    %{"data" => attrs} = Spacetraders.Api.Ship.get_ship(agent(ship), ship.symbol)
-
-    ship |> update(attrs)
-  end
-
-  defp agent(%Ship{agent_symbol: agent_symbol}), do: Spacetraders.Genservers.Agent.get(agent_symbol)
-
-  defp update(ship, attrs) do
-    updated_ship = ship
-      |> Ship.changeset(attrs)
-      |> Ecto.Changeset.apply_changes()
-
-    broadcast({:ok, updated_ship}, :ship_updated)
-
-    if updated_ship.state != ship.state do
-      transition(ship, updated_ship)
-    end
-
-    updated_ship
-  end
-  defp transition(old_ship, ship) do
-    if ship.transition.callback do
-      ship.transition.callback.(ship, ship.state, old_ship.state, ship.transition.data)
-    end
-  end
-
-  def subscribe(%Spacetraders.Ship{} = ship) do
-    Phoenix.PubSub.subscribe(Spacetraders.PubSub, "ship-#{ship.symbol}")
-  end
-
-  # defp broadcast({:error, _reason} = error, _event), do: error
-  defp broadcast({:ok, %Spacetraders.Ship{} = ship}, event) do
-    Phoenix.PubSub.broadcast(Spacetraders.PubSub, "ship-#{ship.symbol}", {event, ship})
-
-    {:ok, ship}
+  def handle_info(:sell_cargo, ship) do
+    {_, ship} = Spacetraders.Ships.sell_cargo(ship)
+    {:noreply, ship}
   end
 end

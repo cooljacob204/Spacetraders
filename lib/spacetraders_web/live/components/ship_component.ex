@@ -3,7 +3,7 @@ defmodule SpacetradersWeb.ShipComponent do
 
   def update(assigns, socket) do
     ship = Spacetraders.ShipServer.get(assigns.ship_symbol)
-    Spacetraders.ShipServer.subscribe(ship)
+    Spacetraders.Ships.subscribe(ship)
     {:ok, socket |> assign(:ship, ship) |> assign(:agent, assigns.agent)}
   end
 
