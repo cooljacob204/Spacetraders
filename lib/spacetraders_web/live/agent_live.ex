@@ -55,17 +55,15 @@ defmodule SpacetradersWeb.AgentLive do
 
   defp subscribe_to_ships(ships, socket) do
     if connected?(socket) do
-      subscribed_ships = subscribed_ships(socket)
-
-      subscribed_ships = Enum.reduce(ships, subscribed_ships, fn ship, subscribed_ships ->
-        unless MapSet.member?(subscribed_ships, ship) do
+      Enum.reduce(ships, subscribed_ships(socket), fn ship, subscribed_ships ->
+        if MapSet.member?(subscribed_ships, ship) do
+          subscribed_ships
+        else
           Spacetraders.Ships.subscribe(ship)
 
           MapSet.put(subscribed_ships, ship)
         end
       end)
-
-      subscribed_ships
     else
       MapSet.new()
     end
