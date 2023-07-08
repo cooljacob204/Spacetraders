@@ -3,7 +3,7 @@ version: '3.3'
 services:
   postgres:
     platform: linux/amd64
-    image: 'postgres:15.2-alpine'
+    image: 'postgis/postgis:15-3.3-alpine'
     environment:
       POSTGRES_USER: 'postgres'
       POSTGRES_PASSWORD: 'postgres'

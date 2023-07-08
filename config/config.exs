@@ -7,6 +7,9 @@
 # General application configuration
 import Config
 
+config :geo_postgis,
+  json_library: Jason
+
 config :spacetraders,
   ecto_repos: [Spacetraders.Repo]
 

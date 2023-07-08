@@ -563,6 +563,17 @@ defmodule SpacetradersWeb.CoreComponents do
     """
   end
 
+
+  def coordinates(assigns) do
+    {x, y} = assigns.coordinates
+    assigns = assigns |> assign(:x, x) |> assign(:y, y)
+    ~H"""
+    <span>
+      [<%= @x %>, <%= @y %>]
+    </span>
+    """
+  end
+
   ## JS Commands
 
   def show(js \\ %JS{}, selector) do

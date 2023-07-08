@@ -1,12 +1,14 @@
 defmodule SpacetradersWeb.Live.SystemComponent do
+  alias Spacetraders.Repo
   use SpacetradersWeb, :live_component
   def mount(socket) do
     {:ok, socket}
   end
 
   def update(assigns, socket) do
-    system = Spacetraders.Genservers.Systems.get(assigns.agent, assigns.ship.nav.system_symbol)
-    {:ok, socket |> assign(:ship, assigns.ship) |> assign(:system, system)}
+    system = Spacetraders.Repo.get_by(Spacetraders.System, symbol: assigns.ship.nav.system_symbol)
+    waypoints = Spacetraders.Waypoint.get_systems_waypoints_with_distance(system, Spacetraders.Repo.get_by(Spacetraders.Waypoint, symbol: assigns.ship.nav.waypoint_symbol))
+    {:ok, socket |> assign(:ship, assigns.ship) |> assign(:system, system) |> assign(:waypoints, waypoints)}
   end
 
   def render(assigns) do
@@ -15,18 +17,17 @@ defmodule SpacetradersWeb.Live.SystemComponent do
       <div class='p-2'>
         <div class='text-xl font-bold'><%= assigns.system.symbol %></div>
         <div><span class='font-bold'>Type:</span> <%= assigns.system.type %></div>
-        <div><span class='font-bold'>X:</span><%= assigns.system.x %></div>
-        <div><span class='font-bold'>Y:</span><%= assigns.system.y %></div>
+        <div><span class='font-bold'>Position:</span><.coordinates coordinates={assigns.system.position.coordinates}/></div>
       </div>
       <div class='text-lg font-bold mt-2 pt-2'>Waypoints</div>
       <div class=''>
-        <%= for waypoint <- assigns.system.waypoints do %>
+        <%= for {waypoint, distance} <- assigns.waypoints do %>
           <div class='border-2 rounded my-1 p-1 flex flex-row justify-between'>
             <div>
               <div><span class='font-bold'>Symbol:</span> <%= waypoint.symbol %></div>
               <div><span class='font-bold'>Type:</span> <%= waypoint.type %></div>
-              <div><span class='font-bold'>X:</span> <%= waypoint.x %></div>
-              <div><span class='font-bold'>Y:</span> <%= waypoint.y %></div>
+              <div><span class='font-bold'>Position:</span><.coordinates coordinates={waypoint.position.coordinates}/></div>
+              <div><span class='font-bold'>Distance:</span> <%= round(distance) %></div>
             </div>
             <div>
               <.button disabled={true}>show</.button>
