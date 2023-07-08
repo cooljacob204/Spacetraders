@@ -1,13 +1,19 @@
 defmodule SpacetradersWeb.Live.SystemComponent do
-  alias Spacetraders.Repo
+  alias Spacetraders.{Repo, Waypoint, System}
   use SpacetradersWeb, :live_component
   def mount(socket) do
     {:ok, socket}
   end
 
   def update(assigns, socket) do
-    system = Spacetraders.Repo.get_by(Spacetraders.System, symbol: assigns.ship.nav.system_symbol)
-    waypoints = Spacetraders.Waypoint.get_systems_waypoints_with_distance(system, Spacetraders.Repo.get_by(Spacetraders.Waypoint, symbol: assigns.ship.nav.waypoint_symbol))
+    {system, waypoints} = if !socket.assigns[:ship] || assigns.ship.nav.waypoint_symbol != socket.assigns.ship.nav.waypoint_symbol do
+      system = Repo.get_by(System, symbol: assigns.ship.nav.system_symbol)
+      waypoints = Waypoint.get_systems_waypoints_with_distance(system, Repo.get_by(Waypoint, symbol: assigns.ship.nav.waypoint_symbol))
+
+      {system, waypoints}
+    else
+      {socket.assigns.system, socket.assigns.waypoints}
+    end
     {:ok, socket |> assign(:ship, assigns.ship) |> assign(:system, system) |> assign(:waypoints, waypoints)}
   end
 
