@@ -14,9 +14,9 @@ defmodule Spacetraders.Ship.Extraction do
 
   defp extracted(cargo, cooldown) do
     if cargo["capacity"] == cargo["units"] do
-      send(self(), :extract_cooldown_ended)
+      send(self(), :cooldown_ended)
     else
-      Process.send_after(self(), :extract_cooldown_ended, cooldown * 1000)
+      Process.send_after(self(), :cooldown_ended, cooldown * 1000)
     end
 
     {:ok, cargo}
@@ -24,7 +24,7 @@ defmodule Spacetraders.Ship.Extraction do
 
   defp error(%{"code" => 4000} = error) do
     cooldown = error["data"]["cooldown"]["remaining_seconds"]
-    Process.send_after(self(), :extract_cooldown_ended, cooldown * 1000)
+    Process.send_after(self(), :cooldown_ended, cooldown * 1000)
 
     {:ok, :cooldown}
   end

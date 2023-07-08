@@ -31,7 +31,7 @@ defmodule Spacetraders.Ships do
   end
   def stop_extracting(ship), do: {{:error, "Ship not extracting"}, ship}
 
-  def extract_cooldown_ended(%Ship{state: :extracting} = ship) do
+  def cooldown_ended(%Ship{state: :extracting} = ship) do
     case Ship.Extraction.extract(ship, agent(ship)) do
       {:ok, :cooldown} -> {:ok, ship}
       {:ok, :cargo_full} -> {:cargo_full, ship |> update(%{state: :in_orbit})}
@@ -39,7 +39,8 @@ defmodule Spacetraders.Ships do
       {:error, error} -> {{:error, error}, ship}
     end
   end
-  def extract_cooldown_ended(ship), do: {:ok, ship}
+  def cooldown_ended(%Ship{state: :in_transit} = ship), do: {:ok, ship |> update(%{state: :in_orbit, nav: %{status: :IN_ORBIT}})}
+  def cooldown_ended(ship), do: {:ok, ship}
 
   def navigate(%Ship{state: :in_orbit} = ship, waypoint) do
     {:ok, %{"data" => attrs}} = Spacetraders.Api.Ship.navigate(agent(ship), ship, waypoint)
@@ -48,13 +49,10 @@ defmodule Spacetraders.Ships do
     ship = update(ship, attrs)
 
     {:ok, arrival_time, 0} = DateTime.from_iso8601(attrs["nav"]["route"]["arrival"])
-    Process.send_after(self(), :navigation_complete, (DateTime.to_unix(arrival_time) - System.system_time(:second)) * 1000)
+    Process.send_after(self(), :cooldown_ended, (DateTime.to_unix(arrival_time) - System.system_time(:second)) * 1000)
 
     {:ok, ship}
   end
-
-  def navigation_complete(%Ship{state: :in_transit} = ship), do: {:ok, ship |> update(%{state: :in_orbit, nav: %{status: :IN_ORBIT}})}
-  def navigation_complete(ship), do: {:ok, ship}
 
   def sell_cargo(%Ship{state: :docked, cargo: %{inventory: []}} = ship), do: {{:error, "cargo empty"}, ship}
   def sell_cargo(%Ship{state: :selling_cargo, cargo: %{inventory: []}} = ship), do: {:ok, ship |> update(%{state: :docked})}

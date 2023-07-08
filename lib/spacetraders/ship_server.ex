@@ -110,12 +110,8 @@ defmodule Spacetraders.ShipServer do
   end
 
   @impl true
-  def handle_info(:extract_cooldown_ended, ship) do
-    {_, ship} = Spacetraders.Ships.extract_cooldown_ended(ship)
-    {:noreply, ship}
-  end
-  def handle_info(:navigation_complete, ship) do
-    {_, ship} = Spacetraders.Ships.navigation_complete(ship)
+  def handle_info(:cooldown_ended, ship) do
+    {_, ship} = Spacetraders.Ships.cooldown_ended(ship)
     {:noreply, ship}
   end
   def handle_info(:sell_cargo, ship) do
