@@ -29,4 +29,3 @@ defmodule Spacetraders.Waypoint do
     Repo.all(query)
   end
 end
-# Spacetraders.Waypoint.get_with_distance(%{id: 12111}, %{position: %Geo.Point{coordinates: {32, 27}, srid: 3857}})

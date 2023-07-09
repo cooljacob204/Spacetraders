@@ -36,7 +36,7 @@ defmodule Spacetraders.Ships do
       {:ok, :cooldown} -> {:ok, ship}
       {:ok, :cargo_full} -> {:cargo_full, ship |> update(%{state: :in_orbit})}
       {:ok, cargo} -> {:ok, ship |> update(%{state: :extracting, cargo: cargo})}
-      {:error, error} -> {{:error, error}, ship}
+      {:error, error} -> {{:error, error}, ship |> update(%{state: :in_orbit})}
     end
   end
   def cooldown_ended(%Ship{state: :in_transit} = ship), do: {:ok, ship |> update(%{state: :in_orbit, nav: %{status: :IN_ORBIT}})}

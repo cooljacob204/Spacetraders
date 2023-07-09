@@ -41,6 +41,37 @@ defmodule Spacetraders.System do
       load_systems(agent, current_page + 1)
     end
   end
+
+  def load_lanes(agent) do
+    # load jumpgates and their waypoints
+    jump_gates = Repo.all(
+      from n in Waypoint,
+      where: n.type == :JUMP_GATE,
+      select: n
+    ) |> Repo.preload(:system)
+
+    for jump_gate <- jump_gates do
+      case Spacetraders.Api.Waypoints.get_jump_gate(agent, jump_gate.system.symbol, jump_gate.symbol) do
+      {:ok, %{"data" => jump_gate_data}} ->
+        for connected_system <- jump_gate_data["connected_systems"] do
+          arrival_system = Repo.get_by(Spacetraders.System, symbol: connected_system["symbol"])
+
+          lane = Spacetraders.Lane.changeset(%Spacetraders.Lane{}, %{
+            jump_system_id: jump_gate.system_id,
+            arrival_system_id: arrival_system.id,
+            distance: connected_system["distance"]
+          })
+
+          Repo.insert(lane, on_conflict: {:replace_all_except, [:id, :inserted_at]}, conflict_target: [:jump_system_id, :arrival_system_id])
+        end
+      _ ->
+        IO.puts("Error loading jump gate #{jump_gate.symbol}")
+      end
+
+      Process.sleep(500)
+    end
+  end
+
   defp load_waypoints(systems) do
     symbols = Enum.map(systems, fn data -> data["symbol"] end)
 
@@ -55,7 +86,7 @@ defmodule Spacetraders.System do
       |> Enum.map(fn waypoint -> prep_waypoint(waypoint, Map.get(systems_in_db, system["symbol"])) end)
     end))
 
-    Repo.insert_all(Spacetraders.Waypoint, prepped_waypoints, conflict_target: :symbol, on_conflict: {:replace, [:symbol, :type, :position, :system_id, :updated_at]})
+    Repo.insert_all(Waypoint, prepped_waypoints, conflict_target: :symbol, on_conflict: {:replace, [:symbol, :type, :position, :system_id, :updated_at]})
   end
   defp prep_system_map(data) do
     Spacetraders.System.changeset(%Spacetraders.System{}, %{
@@ -68,7 +99,7 @@ defmodule Spacetraders.System do
        |> Map.take([:symbol, :sector_symbol, :type, :position, :factions])
   end
   defp prep_waypoint(waypoint, system_id) do
-    Spacetraders.Waypoint.changeset(%Spacetraders.Waypoint{},
+    Waypoint.changeset(%Waypoint{},
       %{
         symbol: waypoint["symbol"],
         type: waypoint["type"],
