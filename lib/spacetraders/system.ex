@@ -37,16 +37,20 @@ defmodule Spacetraders.System do
     total_count = meta["total"]
 
     if current_page * limit < total_count do
-      Process.sleep(500)
       load_systems(agent, current_page + 1)
     end
   end
 
   def load_lanes(agent) do
     # load jumpgates and their waypoints
+    systems_with_lanes = from(
+      l in Spacetraders.Lane,
+      select: l.jump_system_id
+    )
+
     jump_gates = Repo.all(
       from n in Waypoint,
-      where: n.type == :JUMP_GATE,
+      where: n.type == :JUMP_GATE and n.system_id not in subquery(systems_with_lanes),
       select: n
     ) |> Repo.preload(:system)
 
@@ -67,8 +71,6 @@ defmodule Spacetraders.System do
       _ ->
         IO.puts("Error loading jump gate #{jump_gate.symbol}")
       end
-
-      Process.sleep(500)
     end
   end
 
