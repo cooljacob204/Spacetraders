@@ -3,6 +3,7 @@ defmodule Spacetraders.System.Faction do
   import Ecto.Changeset
 
   @primary_key false
+  @derive Jason.Encoder
   embedded_schema do
     field :symbol, Ecto.Enum, values: [:COSMIC, :VOID, :GALACTIC, :QUANTUM, :DOMINION, :ASTRO, :CORSAIRS, :OBSIDIAN, :AEGIS, :UNITED, :SOLITARY, :COBALT, :OMEGA, :ECHO, :LORDS, :CULT, :ANCIENTS, :SHADOW, :ETHEREAL]
   end

@@ -3,6 +3,7 @@ defmodule Spacetraders.Ship do
   import Ecto.Changeset
   alias Spacetraders.{Ship, Ship.Registration, Ship.Navigation, Ship.Fuel, Ship.Cargo, Ship.Transition}
 
+  @derive {Jason.Encoder, except: [:transition, :__meta__]}
   schema "/my/ships" do
     field :state, Ecto.Enum, values: [:idle, :extracting, :in_orbit, :docked, :in_transit, :selling_cargo, :refining], default: :idle
     embeds_one :transition, Transition

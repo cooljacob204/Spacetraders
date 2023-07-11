@@ -4,6 +4,7 @@ defmodule Spacetraders.System do
   alias Spacetraders.{Repo, Waypoint}
   import Ecto.Query, only: [from: 2]
 
+  @derive {Jason.Encoder, except: [:__meta__, :waypoints]}
   schema "systems" do
     field :symbol, :string
     field :sector_symbol, :string

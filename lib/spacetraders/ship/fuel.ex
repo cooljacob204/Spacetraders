@@ -3,6 +3,7 @@ defmodule Spacetraders.Ship.Fuel do
   import Ecto.Changeset
   alias Spacetraders.Ship.Fuel.Consumed
 
+  @derive Jason.Encoder
   embedded_schema do
     field :current, :integer
     field :capacity, :integer

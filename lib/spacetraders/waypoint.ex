@@ -6,6 +6,7 @@ defmodule Spacetraders.Waypoint do
 
   alias Spacetraders.Waypoint.{Chart, Traits}
 
+  @derive Jason.Encoder
   schema "waypoints" do
     field :symbol, :string
     field :type, Ecto.Enum, values: [:PLANET, :GAS_GIANT, :MOON, :ORBITAL_STATION, :JUMP_GATE, :ASTEROID_FIELD, :NEBULA, :DEBRIS_FIELD, :GRAVITY_WELL]

@@ -3,6 +3,7 @@ defmodule Spacetraders.Ship.Cargo.Item do
   import Ecto.Changeset
 
   @primary_key {:symbol, :string, []}
+  @derive Jason.Encoder
   embedded_schema do
     field :name, :string
     field :description, :string

@@ -2,6 +2,7 @@ defmodule Spacetraders.Ship.Navigation.Route do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @derive Jason.Encoder
   embedded_schema do
     field :arrival, :utc_datetime
     field :departure_time, :utc_datetime

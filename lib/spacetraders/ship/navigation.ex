@@ -2,6 +2,7 @@ defmodule Spacetraders.Ship.Navigation do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @derive Jason.Encoder
   embedded_schema do
     field :system_symbol, :string
     field :waypoint_symbol, :string

@@ -3,6 +3,7 @@ defmodule Spacetraders.Ship.Cargo do
   import Ecto.Changeset
   alias Spacetraders.{Ship.Cargo.Item, MarketTransaction}
 
+  @derive Jason.Encoder
   embedded_schema do
     field :capacity, :integer
     field :units, :integer
