@@ -20,6 +20,7 @@ defmodule SpacetradersWeb.Router do
     get "/", PageController, :home
     get "/agents", AgentsController, :index
     live "/agents/:symbol", AgentLive
+    live "/systems", SystemsLive
   end
 
   # Other scopes may use custom stacks.

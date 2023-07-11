@@ -3,7 +3,7 @@ defmodule SpacetradersWeb.Live.JumpGateComponent do
 
   def update(assigns, socket) do
     agent = Spacetraders.Genservers.Agent.get(assigns.ship.agent_symbol)
-    waypoint = Spacetraders.Waypoint.get_waypoint(assigns.system.symbol, assigns.waypoint_symbol)
+    waypoint = Spacetraders.Waypoint.get_waypoint(assigns.waypoint_symbol)
     jump_systems = Spacetraders.System.get_jump_systems(assigns.system)
     {:ok, socket |> assign(:ship, assigns.ship) |> assign(:system, assigns.system) |> assign(:waypoint, waypoint) |> assign(:jump_systems, jump_systems) |> assign(:agent, agent)}
   end

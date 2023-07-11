@@ -30,7 +30,7 @@ defmodule Spacetraders.Waypoint do
     |> cast_embed(:faction, with: &Spacetraders.System.Faction.changeset/2)
   end
 
-  def get_waypoint(system_symbol, waypoint_symbol) do
+  def get_waypoint(waypoint_symbol) do
     from(
       w in Spacetraders.Waypoint,
       where: w.symbol == ^waypoint_symbol,
@@ -65,9 +65,9 @@ defmodule Spacetraders.Waypoint do
     ) |> Repo.one()
 
     case Spacetraders.Api.Waypoints.get_waypoint(agent, system_symbol, waypoint_symbol) do
-      {:ok, %{"data" => %{"orbitals" => orbitals, "traits" => traits, "chart" => chart, "faction" => faction}}} ->
+      {:ok, %{"data" => %{"orbitals" => orbitals, "traits" => traits} = data}} ->
         {:ok,
-         changeset(waypoint, %{orbitals: orbitals, traits: traits, chart: chart, faction: faction})
+         changeset(waypoint, %{orbitals: orbitals, traits: traits, chart: data["chart"], faction: data["faction"]})
          |> Repo.insert!(on_conflict: {:replace, [:orbitals, :traits, :chart, :faction]}, conflict_target: :symbol)}
       {:error, %{"errors" => errors}} ->
         IO.inspect(errors)

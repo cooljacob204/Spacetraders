@@ -4,7 +4,7 @@ defmodule Spacetraders.Api.Agent do
     get(agent, "/my/agent")
   end
 
-  def get_ships(agent) do
-    get(agent, "/my/ships")
+  def get_ships(agent, opts \\ []) do
+    get(agent, "/my/ships", opts)
   end
 end

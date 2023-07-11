@@ -21,7 +21,7 @@ defmodule Spacetraders.Ship do
   end
 
   def list_ships(agent) do
-    ships = case Spacetraders.Api.Agent.get_ships(agent) do
+    ships = case Spacetraders.Api.Agent.get_ships(agent, params: %{limit: 20}) do
       {:ok, %{"data" => data}} -> data
       {:ok, %{"error" => error }} -> raise "Error: #{error}"
     end
