@@ -111,7 +111,9 @@ defmodule Spacetraders.Ships do
     if ship.transition.callback do
       case ship.transition.callback.(ship, state, old_state, data) do
         {:ok, transitioned_ship} -> {:ok, transitioned_ship }
-        {:error, _error} -> {:error, ship |> update(%{transition: %{callback: nil, data: nil}})}
+        {error, transitioned_ship} ->
+          IO.puts "Error: #{inspect error}"
+          {:error, transitioned_ship |> update(%{transition: %{callback: nil, data: nil}})}
       end
     else
       {:ok, ship}

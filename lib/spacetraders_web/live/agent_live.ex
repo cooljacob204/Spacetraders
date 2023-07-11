@@ -27,7 +27,7 @@ defmodule SpacetradersWeb.AgentLive do
       </header>
       <content class='flex flex-row flex-wrap'>
         <%= for ship <- Enum.sort(assigns.agent.ships) do %>
-          <.live_component module={SpacetradersWeb.ShipComponent} id={ship} ship_symbol={ship} agent={assigns.agent}/>
+          <.live_component module={SpacetradersWeb.Live.ShipComponent} id={ship} ship_symbol={ship} agent={assigns.agent}/>
         <% end %>
       </content>
     """
@@ -37,7 +37,7 @@ defmodule SpacetradersWeb.AgentLive do
     {:noreply, socket |> assign(:agent, agent) |> assign(:subscribed_ships, subscribe_to_ships(agent.ships, socket))}
   end
   def handle_info({:ship_updated, ship}, socket) do
-    send_update SpacetradersWeb.ShipComponent, id: ship.symbol, ship_symbol: ship.symbol, agent: socket.assigns.agent
+    send_update SpacetradersWeb.Live.ShipComponent, id: ship.symbol, ship_symbol: ship.symbol, agent: socket.assigns.agent
     {:noreply, socket}
   end
 

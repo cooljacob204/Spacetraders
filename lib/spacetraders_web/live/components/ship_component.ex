@@ -1,4 +1,4 @@
-defmodule SpacetradersWeb.ShipComponent do
+defmodule SpacetradersWeb.Live.ShipComponent do
   use SpacetradersWeb, :live_component
 
   def update(assigns, socket) do
@@ -10,7 +10,14 @@ defmodule SpacetradersWeb.ShipComponent do
     ~H"""
     <div class='border-2 rounded p-2 m-1'>
       <.modal id={"ship-#{assigns.ship.symbol}-system"}>
-        <.live_component module={SpacetradersWeb.Live.SystemComponent} id={"ship-#{assigns.ship.symbol}-system-live"} ship={assigns.ship} agent={assigns.agent}/>
+        <.live_component
+          module={SpacetradersWeb.Live.SystemComponent}
+          id={"ship-#{assigns.ship.symbol}-system-live"}
+          ship={assigns.ship}
+          agent={assigns.agent}
+          system_symbol={assigns.ship.nav.system_symbol}
+          waypoint_symbol={assigns.ship.nav.waypoint_symbol}
+        />
       </.modal>
       <.modal id={"ship-#{assigns.ship.symbol}-inventory"}>
         <.live_component module={SpacetradersWeb.Live.InventoryComponent} id={"ship-#{assigns.ship.symbol}-inventory-live"} inventory={assigns.ship.cargo.inventory}/>

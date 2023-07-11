@@ -23,6 +23,16 @@ defmodule Spacetraders.System do
     |> cast_assoc(:waypoints, with: &Waypoint.changeset/2)
   end
 
+  def get_jump_systems(system) do
+    from(
+      l in Spacetraders.Lane,
+        join: s in Spacetraders.System, on: l.arrival_system_id == s.id,
+      where: l.jump_system_id == ^system.id,
+      select: {l.distance, s},
+      order_by: l.distance
+    ) |> Repo.all()
+  end
+
   def load_systems(agent), do: load_systems(agent, 1)
   def load_systems(agent, page) do
     limit = 20
