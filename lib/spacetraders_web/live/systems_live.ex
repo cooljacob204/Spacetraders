@@ -3,18 +3,7 @@ defmodule SpacetradersWeb.SystemsLive do
   import Ecto.Query, only: [from: 2]
 
   def mount(_params, _session, socket) do
-    systems = from(
-      s in Spacetraders.System,
-      select: s
-    ) |> Spacetraders.Repo.all()
-    lanes = from(
-      l in Spacetraders.Lane,
-        join: s in Spacetraders.System, on: l.arrival_system_id == s.id,
-        join: j in Spacetraders.System, on: l.jump_system_id == j.id,
-      select: {s.position, j.position}
-    ) |> Spacetraders.Repo.all()
-
-    {:ok, socket |> assign(:systems, systems) |> assign(:lanes, lanes) |> assign(:ships_and_their_system, ships_and_their_system())}
+    {:ok, socket}
   end
 
   def render(assigns) do
@@ -22,14 +11,14 @@ defmodule SpacetradersWeb.SystemsLive do
       <header>
       </header>
       <content>
+        <div class='bg-black' id="systemview" phx-update="ignore"></div>
         <%= if assigns[:system] do %>
           <.modal id={"system"} show={true} on_cancel={JS.push("hide-system")}>
             <%= @system %>
           </.modal>
         <% end %>
-        <div class='bg-black' id="systemview" phx-update="ignore"></div>
       </content>
-      <script type="module">
+      <script type="module" id="script" phx-update="ignore">
         d3.select("html").attr("style", null);
 
         function handleZoom(e) {
@@ -45,19 +34,35 @@ defmodule SpacetradersWeb.SystemsLive do
 
         svg.call(d3.zoom().on('zoom', handleZoom))
 
-        const lanes = [<%= for lane <- @lanes do %><% {%{coordinates: {x1, y1}}, %{coordinates: {x2, y2}}} = lane %>[<%= x1 %>, <%= y1 %>, <%= x2 %>, <%= y2 %>],<% end %>]
+        async function getLanes() {
+          return fetch("/api/systems/lanes")
+            .then((response) => response.json())
+            .then((data) => {
+              return data.data
+            })
+        }
+
+        let lanes = await getLanes()
 
         lanes.forEach((lane) => {
           g.append("line")
-            .attr("x1", lane[0])
-            .attr("y1", -lane[1])
-            .attr("x2", lane[2])
-            .attr("y2", -lane[3])
+            .attr("x1", lane[0][0])
+            .attr("y1", -lane[0][1])
+            .attr("x2", lane[1][0])
+            .attr("y2", -lane[1][1])
             .attr("stroke-width", 1)
             .attr("stroke", "white")
         })
 
-        const systems = <%= raw(Jason.encode!(@systems)) %>
+        async function getSystems() {
+          return fetch("/api/systems")
+            .then((response) => response.json())
+            .then((data) => {
+              return data.data
+            })
+        }
+
+        const systems = await getSystems()
 
         systems.forEach((system) => {
           g.append("circle")
@@ -72,7 +77,15 @@ defmodule SpacetradersWeb.SystemsLive do
             .on("mouseout", () => {removeSystemInfo(system)})
         })
 
-        const ships = <%= raw(Jason.encode!(@ships_and_their_system, escape: :html_safe)) %>
+        async function getShips() {
+          return fetch("/api/ships_and_their_systems")
+            .then((response) => response.json())
+            .then((data) => {
+              return data.data
+            })
+        }
+
+        const ships = await getShips()
 
         ships.forEach((ship) => {
           g.append("circle")
@@ -132,17 +145,5 @@ defmodule SpacetradersWeb.SystemsLive do
   end
   def handle_event("hide-system", _params, socket) do
     {:noreply, socket |> assign(:system, nil)}
-  end
-
-  defp ships_and_their_system do
-    List.flatten(Enum.map(Spacetraders.Agent.list_agents(), fn agent ->
-      agent = Spacetraders.Genservers.Agent.get(agent.symbol)
-      Enum.map(agent.ships, fn ship ->
-        ship = Spacetraders.ShipServer.get(ship)
-        system = from(s in Spacetraders.System, where: s.symbol == ^ship.nav.system_symbol, select: s) |> Spacetraders.Repo.one()
-
-        %{ship: ship, system: system}
-      end)
-    end))
   end
 end

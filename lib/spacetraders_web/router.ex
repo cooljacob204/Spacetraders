@@ -23,6 +23,14 @@ defmodule SpacetradersWeb.Router do
     live "/systems", SystemsLive
   end
 
+  scope "/api", SpacetradersWeb do
+    pipe_through :api
+
+    get "/systems", Api.SystemsController, :index
+    get "/systems/lanes", Api.SystemsLanesController, :index
+    get "/ships_and_their_systems", Api.ShipsAndTheirSystemsController, :index
+  end
+
   # Other scopes may use custom stacks.
   # scope "/api", SpacetradersWeb do
   #   pipe_through :api

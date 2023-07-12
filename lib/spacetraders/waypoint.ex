@@ -31,6 +31,45 @@ defmodule Spacetraders.Waypoint do
     |> cast_embed(:faction, with: &Spacetraders.System.Faction.changeset/2)
   end
 
+  def load_waypoints(agent) do
+    systems = from(
+      s in Spacetraders.System,
+      select: s
+    ) |> Repo.all()
+
+    Enum.each(systems, fn system ->
+      load_waypoints(agent, system)
+    end)
+  end
+  def load_waypoints(agent, system),  do: load_waypoints(agent, system, 1)
+  def load_waypoints(agent, system, page) do
+    limit = 20
+    {:ok, %{"data" => waypoints, "meta" => meta}} = Spacetraders.Api.Waypoints.get_waypoints(agent, system.symbol, params: %{limit: limit, page: page})
+    prepped_waypoints = Enum.map(waypoints, fn waypoint -> prep_waypoint(waypoint, system) end)
+
+    Repo.insert_all(Spacetraders.Waypoint, prepped_waypoints, conflict_target: :symbol, on_conflict: {:replace, [:system_id, :symbol, :type, :position, :chart, :traits, :orbitals, :faction, :updated_at]})
+
+    current_page = meta["page"]
+    total_count = meta["total"]
+
+    if current_page * limit < total_count do
+      load_waypoints(agent, system, current_page + 1)
+    end
+  end
+  defp prep_waypoint(waypoint, system) do
+    changeset(%Spacetraders.Waypoint{}, %{
+      symbol: waypoint["symbol"],
+      type: waypoint["type"],
+      position: %Geo.Point{coordinates: {waypoint["x"], waypoint["y"]}, srid: 3857},
+      traits: waypoint["traits"],
+      orbitals: waypoint["orbitals"],
+      chart: waypoint["chart"],
+      faction: waypoint["faction"]
+    }) |> Ecto.Changeset.apply_changes()
+       |> Map.take([:symbol, :type, :position, :chart, :traits, :orbitals, :faction])
+       |> Map.put(:system_id, system.id)
+  end
+
   def get_waypoint(waypoint_symbol) do
     from(
       w in Spacetraders.Waypoint,

@@ -21,13 +21,18 @@ defmodule Spacetraders.Ship do
     embeds_one :cargo, Cargo
   end
 
-  def list_ships(agent) do
-    ships = case Spacetraders.Api.Agent.get_ships(agent, params: %{limit: 20}) do
-      {:ok, %{"data" => data}} -> data
+  def list_ships(agent), do: list_ships(agent, 1)
+  def list_ships(agent, page) do
+    {ships, meta} = case Spacetraders.Api.Agent.get_ships(agent, params: %{limit: 20, page: page}) do
+      {:ok, %{"data" => data, "meta" => meta}} -> {data, meta}
       {:ok, %{"error" => error }} -> raise "Error: #{error}"
     end
 
-    Enum.map(ships, fn attrs -> prep_ship(attrs, agent) end)
+    if meta["page"] * meta["limit"] < meta["total"] do
+      Enum.map(ships, fn attrs -> prep_ship(attrs, agent) end) ++ list_ships(agent, meta["page"] + 1)
+    else
+      Enum.map(ships, fn attrs -> prep_ship(attrs, agent) end)
+    end
   end
 
   def get_ship(agent, symbol) do

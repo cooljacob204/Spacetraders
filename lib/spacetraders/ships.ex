@@ -73,7 +73,18 @@ defmodule Spacetraders.Ships do
         Spacetraders.Genservers.Agent.update(agent["symbol"], agent)
         send(self(), :sell_cargo)
         {:ok, ship |> update(%{cargo: cargo})}
-      {:error, error} -> {{:error, error}, ship}
+      {:error, error} ->
+        IO.puts "Error: #{inspect error}"
+        {{:error, error}, ship |> update(%{state: :docked})}
+    end
+  end
+
+  def dump_item(ship, cargo_symbol, units) do
+    case Ship.Cargo.dump_item(ship, cargo_symbol, units) do
+      {:ok, cargo} -> {:ok, ship |> update(%{cargo: cargo})}
+      {:error, error} ->
+        IO.puts "Error: #{inspect error}"
+        {{:error, error}, ship}
     end
   end
 

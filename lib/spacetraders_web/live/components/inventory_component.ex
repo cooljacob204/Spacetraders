@@ -5,7 +5,7 @@ defmodule SpacetradersWeb.Live.InventoryComponent do
   end
 
   def update(assigns, socket) do
-    {:ok, socket |> assign(:inventory, assigns.inventory)}
+    {:ok, socket |> assign(:inventory, assigns.inventory) |> assign(:ship, assigns.ship)}
   end
 
   def render(assigns) do
@@ -19,11 +19,17 @@ defmodule SpacetradersWeb.Live.InventoryComponent do
             <div><label class='text-l font-bold'>Description:</label> <%= item.description %></div>
           </div>
           <div>
-            <.button disabled={true}>sell</.button>
+            <.button phx-click="dump" phx-value-symbol={item.symbol} phx-value-units={item.units} phx-target={@myself}>dump</.button>
           </div>
         </div>
       <% end %>
     </div>
     """
+  end
+
+  def handle_event("dump", %{"symbol" => symbol, "units" => units}, socket) do
+    Spacetraders.ShipServer.dump_item(socket.assigns.ship.symbol, symbol, String.to_integer(units))
+
+    {:noreply, socket}
   end
 end

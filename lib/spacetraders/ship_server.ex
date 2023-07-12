@@ -43,6 +43,10 @@ defmodule Spacetraders.ShipServer do
     GenServer.call(via_tuple(symbol), :sell_cargo)
   end
 
+  def dump_item(symbol, cargo_symbol, units) do
+    GenServer.call(via_tuple(symbol), {:dump_item, cargo_symbol, units})
+  end
+
   def set_transition(symbol, callback, data) do
     GenServer.call(via_tuple(symbol), {:set_transition, callback, data})
   end
@@ -106,6 +110,10 @@ defmodule Spacetraders.ShipServer do
   end
   def handle_call(:remove_transition, _from, ship) do
     {resp, ship} = Spacetraders.Ships.remove_transition(ship)
+    {:reply, resp, ship}
+  end
+  def handle_call({:dump_item, cargo_symbol, units}, _from, ship) do
+    {resp, ship} = Spacetraders.Ships.dump_item(ship, cargo_symbol, units)
     {:reply, resp, ship}
   end
 

@@ -26,7 +26,16 @@ defmodule SpacetradersWeb.AgentLive do
         </div>
       </header>
       <content class='flex flex-row flex-wrap'>
-        <%= for ship <- Enum.sort(assigns.agent.ships) do %>
+        <%= for ship <- Enum.sort(
+          assigns.agent.ships,
+          fn ship1, ship2 ->
+            if String.length(ship1) == String.length(ship2) do
+              ship1 < ship2
+            else
+              String.length(ship1) < String.length(ship2)
+            end
+          end
+        ) do %>
           <.live_component module={SpacetradersWeb.Live.ShipComponent} id={ship} ship_symbol={ship} agent={assigns.agent}/>
         <% end %>
       </content>

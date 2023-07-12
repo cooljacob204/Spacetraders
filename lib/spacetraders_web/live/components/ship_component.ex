@@ -20,7 +20,10 @@ defmodule SpacetradersWeb.Live.ShipComponent do
         />
       </.modal>
       <.modal id={"ship-#{assigns.ship.symbol}-inventory"}>
-        <.live_component module={SpacetradersWeb.Live.InventoryComponent} id={"ship-#{assigns.ship.symbol}-inventory-live"} inventory={assigns.ship.cargo.inventory}/>
+        <.live_component module={SpacetradersWeb.Live.InventoryComponent} id={"ship-#{assigns.ship.symbol}-inventory-live"} inventory={assigns.ship.cargo.inventory} ship={@ship}/>
+      </.modal>
+      <.modal id={"ship-#{@ship.symbol}-routine"}>
+        <div><span class='text-xl font-bold'>Extract and Sell: </span><.button phx-click="run_routine" phx-value-routine="extract_and_sell" phx-target={@myself}>run</.button></div>
       </.modal>
       <div class='text-xl font-bold px-1 pt-2'><%= assigns.ship.symbol %> - <%= transition_description(assigns.ship) %></div>
       <div class='text-l font-bold px-1 pb-2'>Status: <%= assigns.ship.state %></div>
@@ -41,7 +44,7 @@ defmodule SpacetradersWeb.Live.ShipComponent do
             <div class='text-lg font-bold'>Cargo</div>
             <div>Current: <%= assigns.ship.cargo.units %></div>
             <div>Capacity: <%= assigns.ship.cargo.capacity %></div>
-            <.button class='rounded-full bg-cyan-500 text-white px-4 py-2 mt-2' phx-click={show_modal("ship-#{assigns.ship.symbol}-inventory")}>Inventory</.button>
+            <.button class='mt-2' phx-click={show_modal("ship-#{assigns.ship.symbol}-inventory")}>Inventory</.button>
           </div>
         </div>
         <div class='border-2 rounded p-2'>
@@ -56,13 +59,14 @@ defmodule SpacetradersWeb.Live.ShipComponent do
             <div>
               <%= case assigns.ship.nav.status do %>
                 <% :DOCKED -> %>
-                  <.button class='rounded-full bg-cyan-500 text-white px-4 py-2' disabled={assigns.ship.state != :docked} phx-click="orbit" phx-target={@myself}>Orbit</.button>
+                  <.button disabled={assigns.ship.state != :docked} phx-click="orbit" phx-target={@myself}>Orbit</.button>
                 <% :IN_ORBIT -> %>
-                  <.button class='rounded-full bg-cyan-500 text-white px-4 py-2' disabled={assigns.ship.state != :in_orbit} phx-click="dock" phx-target={@myself}>Dock</.button>
+                  <.button disabled={assigns.ship.state != :in_orbit} phx-click="dock" phx-target={@myself}>Dock</.button>
                 <% _ -> %>
               <% end %>
-                <.button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click={show_modal("ship-#{assigns.ship.symbol}-system")}>System</.button>
-                <.button class='rounded-full bg-cyan-500 text-white px-4 py-2' phx-click="sync" phx-target={@myself}>Sync</.button>
+                <.button phx-click={show_modal("ship-#{assigns.ship.symbol}-system")}>System</.button>
+                <.button phx-click="sync" phx-target={@myself}>Sync</.button>
+                <.button phx-click={show_modal("ship-#{@ship.symbol}-routine")}>routines</.button>
             </div>
           </div>
           <div class='border-2 rounded p-2'>
@@ -124,6 +128,10 @@ defmodule SpacetradersWeb.Live.ShipComponent do
   def handle_event("sync", _, socket) do
     ship = socket.assigns.ship
     Spacetraders.ShipServer.sync(ship.symbol)
+    {:noreply, socket}
+  end
+  def handle_event("run_routine", %{"routine" => "extract_and_sell"}, socket) do
+    Spacetraders.Ship.Routines.ExtractAndSell.start_routine(socket.assigns.ship.symbol)
     {:noreply, socket}
   end
 end

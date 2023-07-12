@@ -27,6 +27,16 @@ defmodule Spacetraders.Ship.Cargo do
       {:ok, %{"error" => error }} -> {:error, error}
     end
   end
+
+  def dump_item(ship, symbol, units) do
+    agent = Spacetraders.Genservers.Agent.get(ship.agent_symbol)
+
+    case Spacetraders.Api.Ship.dump_item(agent, ship, symbol, units) do
+      {:ok, %{"data" => %{"cargo" => cargo}}} -> {:ok, cargo}
+      {:ok, %{"error" => error }} -> {:error, error}
+    end
+  end
+
   defp log_transaction(transaction) do
     MarketTransaction.create(%MarketTransaction{} |> MarketTransaction.changeset(transaction) |> apply_changes())
   end
